@@ -1,0 +1,16 @@
+__pycache__
+.vscode
+misc
+trace.txt
+
+data/*
+
+!data/threads
+data/threads/*
+!data/threads/.keep
+
+!data/patterns
+data/patterns/*
+!data/patterns/.keep
+
+*.pyc
