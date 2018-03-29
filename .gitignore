@@ -3,7 +3,16 @@ __pycache__
 misc
 trace.txt
 
+.vscode
+.settings
+.gradle
+.classpath
+.project
+build
+bin
+
 data/*
+backup
 
 !data/threads
 data/threads/*

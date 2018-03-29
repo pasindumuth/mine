@@ -189,7 +189,7 @@ class Sequence:
 
                 sublist1 = self.sequence[(i+1):(lastFuncIdx + 1)]
 
-                for idx in range (0, candidateListLength):
+                for idx in range(0, candidateListLength):
                     idx1 = len(self.sequence) -  candidateListLength*2 + idx
 
                     if (isinstance(self.sequence[idx1], set) and
