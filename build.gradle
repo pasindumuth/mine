@@ -1,0 +1,37 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'Main'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "com.google.protobuf:protobuf-java:2.6.1"
+    compile "com.github.ben-manes.caffeine:caffeine:2.6.1"
+    compile 'com.google.guava:guava:24.0-jre'
+    compile "org.projectlombok:lombok:1.16.20"
+    compile "com.timgroup:java-statsd-client:3.0.1"
+    testCompile "junit:junit:4.12"
+}
+
+jar {
+    baseName = 'mine'
+    manifest {
+        attributes("Main-Class": "Main")
+        attributes("Class-Path": configurations.compile.collect { it.getAbsolutePath() }.join(' '))
+    }
+}
+
+task Jar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+    baseName = 'mine-complete'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

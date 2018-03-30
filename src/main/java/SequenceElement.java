@@ -39,4 +39,22 @@ public class SequenceElement {
     public int getFunction() {
         return function;
     }
+
+    @Override
+    public String toString() {
+        if (type == Constants.TYPE_FUNCTION) {
+            return String.valueOf(function);
+        } else {
+            StringBuilder s = new StringBuilder();
+            s.append("{");
+            String[] subPatternStrings = new String[subPatterns.size()];
+            for (int i = 0; i < subPatterns.size(); i++)
+                subPatternStrings[i] = String.valueOf(subPatterns.get(i));
+                
+            s.append(String.join(", ", subPatternStrings));
+            s.append("}");
+
+            return s.toString();
+        }
+    }
 }

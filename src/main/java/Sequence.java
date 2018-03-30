@@ -14,10 +14,7 @@ public class Sequence {
     }
 
     public ArrayList<SequenceElement> getSequence() {
-        for (int i = sequence.size() - 1; i >= sequenceEnd; i--) {
-            sequence.remove(i);
-        }
-
+        crop();
         return sequence;
     }
 
@@ -25,10 +22,9 @@ public class Sequence {
         if (sequence.size() == sequenceEnd) sequence.add(element);
         else sequence.set(sequenceEnd, element);
         sequenceEnd++;
-        compressVeryLossy();
     }
 
-    private void compressVeryLossy() {
+    public void compressVeryLossy() {
         SequenceElement lastElement = sequence.get(sequenceEnd - 1);
         for (int i = sequenceEnd - 1; i > 0; i--) {
             if (sequence.get(i - 1).getType() == lastElement.getType() &&
@@ -74,8 +70,7 @@ public class Sequence {
         return true;
     }
 
-    @Override
-    public int hashCode() {
+    public int hash() {
         Hasher hasher = Hashing.murmur3_32(Constants.MURMUR_SEED).newHasher();
         for (int i = 0; i < sequenceEnd; i++) {
             SequenceElement e = sequence.get(i);
@@ -92,5 +87,26 @@ public class Sequence {
         }
 
         return hasher.hash().asInt();
+    }
+
+    @Override
+    public String toString() {
+        crop();
+
+        StringBuilder s = new StringBuilder();
+        s.append("[");
+        String[] sequenceElementStrings = new String[sequence.size()];
+        for (int i = 0; i < sequence.size(); i++)
+            sequenceElementStrings[i] = sequence.get(i).toString();
+
+        s.append(String.join(", ", sequenceElementStrings));
+        s.append("]");
+
+        return s.toString();
+    }
+
+    private void crop() {
+        for (int i = sequence.size() - 1; i >= sequenceEnd; i--)
+            sequence.remove(i);
     }
 }

@@ -11,4 +11,10 @@ public class Constants {
     public static final int TYPE_SUB_PATTERNS = 1;
 
     public static final int MURMUR_SEED = 16109143;
+
+    public static final int PATTERN_BASE = 1000000;
+
+    // Data
+    public static final int FUNCTION_ENTER = 0;
+    public static final int FUNCTION_EXIT = 1;
 }
