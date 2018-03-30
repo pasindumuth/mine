@@ -5,12 +5,12 @@ public class Pattern {
     
     private Sequence sequence;
     private int patternID;
-    private List<Long> tracePositions;
+    private List<Long> startTimes;
     private List<Long> durations;
 
     public Pattern(Sequence sequence, int patternID) {
         this.sequence = sequence;
-        this.tracePositions = new ArrayList<>();
+        this.startTimes = new ArrayList<>();
         this.durations = new ArrayList<>();
         this.patternID = patternID;
     }
@@ -20,16 +20,21 @@ public class Pattern {
     }
 
     public List<Long> getTracePosition() {
-        return tracePositions;
+        return startTimes;
     }
 
     public List<Long> getDurations() {
         return durations;
     }
 
-    public void addPosition(long startTime, long endTime) {
-        tracePositions.add(startTime);
+    public void addInstance(long startTime, long endTime) {
+        startTimes.add(startTime);
         durations.add(endTime - startTime);
+    }
+
+    public void clearInstances() {
+        startTimes = new ArrayList<>();
+        durations = new ArrayList<>();
     }
 
     public int sequenceHash() {

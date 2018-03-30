@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SequenceElement {
 
@@ -9,7 +11,7 @@ public class SequenceElement {
      */
 
     private int type;
-    private ArrayList<Integer> subPatterns;
+    private Map<Integer, Integer> subPatterns;
     private int function;
 
     public SequenceElement(int function) {
@@ -18,9 +20,9 @@ public class SequenceElement {
         this.function = function;
     }
 
-    public SequenceElement(ArrayList<Integer> subPatterns) {
+    public SequenceElement() {
         this.type = Constants.TYPE_SUB_PATTERNS;
-        this.subPatterns = subPatterns;
+        this.subPatterns = new HashMap<>();
         this.function = -1;
     }
 
@@ -29,10 +31,20 @@ public class SequenceElement {
     }
 
     public void add(int patternID) {
-        subPatterns.add(patternID);
+        Integer count = subPatterns.get(patternID);
+        count = count == null ? 1 : count + 1;
+        subPatterns.put(patternID, count);
     }
 
-    public ArrayList<Integer> getSubPatterns() {
+    public void addAll(Map<Integer, Integer> otherSubPatterns) {
+        for (Map.Entry<Integer, Integer> entry : otherSubPatterns.entrySet()) {
+            Integer count = subPatterns.get(entry.getKey());
+            count = count == null ? entry.getValue() : count + entry.getValue();
+            subPatterns.put(entry.getKey(), count);
+        }
+    }
+
+    public Map<Integer, Integer> getSubPatterns() {
         return subPatterns;
     }
 
@@ -47,10 +59,13 @@ public class SequenceElement {
         } else {
             StringBuilder s = new StringBuilder();
             s.append("{");
-            String[] subPatternStrings = new String[subPatterns.size()];
-            for (int i = 0; i < subPatterns.size(); i++)
-                subPatternStrings[i] = String.valueOf(subPatterns.get(i));
-                
+            ArrayList<String> subPatternStrings = new ArrayList<String>();
+            for (Map.Entry<Integer, Integer> entry : subPatterns.entrySet()) {
+                String patternID = String.valueOf(entry.getKey());
+                String count = String.valueOf(entry.getValue());
+                subPatternStrings.add("(" + patternID + " => " + count + ")");
+            }
+
             s.append(String.join(", ", subPatternStrings));
             s.append("}");
 

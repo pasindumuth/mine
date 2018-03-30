@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +20,20 @@ public class PatternMiner {
             sequenceForLevel.put(stackLevel, container);
         
         } else if (stackLevel == currentStackLevel) {
+
+            /**
+             * There is only one circumstance when there would not
+             * already be SequenceContainer for this level. This is when
+             * at the very start of the trace, the execution enters a function
+             * and then immediately exits.
+             */
+
+            if (!sequenceForLevel.containsKey(stackLevel)) {
+                SequenceContainer container = new SequenceContainer(
+                    new Sequence(), startTime, startTime);
+                sequenceForLevel.put(stackLevel, container);
+            }
+
             SequenceContainer container = sequenceForLevel.get(stackLevel);
             Sequence sequence = container.getSequence();
             sequence.add(new SequenceElement(functionID));
@@ -42,11 +55,14 @@ public class PatternMiner {
         
             SequenceContainer container = sequenceForLevel.get(stackLevel);
             Sequence sequence = container.getSequence();
-            sequence.add(new SequenceElement(functionID));
 
-            ArrayList<Integer> subPatterns = new ArrayList<>();
-            subPatterns.add(patternID);
-            sequence.add(new SequenceElement(subPatterns));
+            SequenceElement functionElement = new SequenceElement(functionID);
+            SequenceElement patternElement = new SequenceElement();
+            patternElement.add(patternID);
+
+            sequence.add(functionElement);
+            sequence.add(patternElement);
+            sequence.compressVeryLossy();
 
             container.updateEndTime(endTime);
         }
@@ -81,7 +97,7 @@ public class PatternMiner {
             patterns.put(sequenceHash, pattern);
         }
         Pattern pattern = patterns.get(sequenceHash);
-        pattern.addPosition(oldContainer.getStartTime(), oldContainer.getEndTime());
+        pattern.addInstance(oldContainer.getStartTime(), oldContainer.getEndTime());
         return pattern;
     }
 }

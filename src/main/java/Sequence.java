@@ -40,8 +40,7 @@ public class Sequence {
                     int i2 = i1 - candidateListLength;
 
                     if (sequence.get(i1).getType() == Constants.TYPE_SUB_PATTERNS) {
-                        sequence.get(i2).getSubPatterns().addAll(
-                            sequence.get(i1).getSubPatterns());
+                        sequence.get(i2).addAll(sequence.get(i1).getSubPatterns());
                     }
                 }
 

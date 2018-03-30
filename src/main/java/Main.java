@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,17 +10,33 @@ import java.util.Map;
 
 public class Main {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         Map<Integer, Pattern> patterns = new HashMap<>();
-        BufferedReader reader = new BufferedReader(new FileReader(Constants.THREAD_DIR + "thread_trace_19.txt"));
 
-        patterns = mineThread(patterns, reader);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(Constants.PATTERN_DIR + "thread_19_patterns.txt"));
-        PatternWriter patternWriter = new PatternWriter(patterns, writer);
-        patternWriter.write();
+        for (int i = 1;; i++) {
+            BufferedReader reader;
+            try {
+                reader = new BufferedReader(
+                    new FileReader(Constants.THREAD_DIR + "thread." + String.valueOf(i) + ".trace"));
+            } catch (FileNotFoundException e) {
+                break;
+            }
 
-        reader.close();
-        writer.close();
+            System.out.println("Starting to mine thread: " + String.valueOf(i));
+            patterns = mineThread(patterns, reader);
+    
+            BufferedWriter writer = new BufferedWriter(
+                new FileWriter(Constants.PATTERN_DIR + "thread." + String.valueOf(i) + ".patterns"));
+                
+            PatternWriter patternWriter = new PatternWriter(patterns, writer);
+            patternWriter.write();
+    
+            reader.close();
+            writer.close();
+
+            for (Pattern pattern : patterns.values())
+                pattern.clearInstances();
+        }
     }
 
     public static Map<Integer, Pattern> mineThread(Map<Integer, Pattern> currentPatterns, BufferedReader reader) 
