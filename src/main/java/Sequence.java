@@ -6,25 +6,17 @@ import com.google.common.hash.Hashing;
 public class Sequence {
     
     private ArrayList<SequenceElement> sequence;
-    private int sequenceEnd;
 
     public Sequence() {
         this.sequence = new ArrayList<SequenceElement>();
-        this.sequenceEnd = 0;
-    }
-
-    public ArrayList<SequenceElement> getSequence() {
-        crop();
-        return sequence;
     }
 
     public void add(SequenceElement element) {
-        if (sequence.size() == sequenceEnd) sequence.add(element);
-        else sequence.set(sequenceEnd, element);
-        sequenceEnd++;
+        sequence.add(element);
     }
 
     public void compressVeryLossy() {
+        int sequenceEnd = sequence.size();
         SequenceElement lastElement = sequence.get(sequenceEnd - 1);
         for (int i = sequenceEnd - 1; i > 0; i--) {
             if (sequence.get(i - 1).getType() == lastElement.getType() &&
@@ -40,58 +32,72 @@ public class Sequence {
                     int i2 = i1 - candidateListLength;
 
                     if (sequence.get(i1).getType() == Constants.TYPE_SUB_PATTERNS) {
-                        sequence.get(i2).addAll(sequence.get(i1).getSubPatterns());
+                        sequence.get(i2).addAll(sequence.get(i1));
                     }
                 }
 
-                sequenceEnd = sequenceEnd - candidateListLength;
+                cropEnd(sequenceEnd - candidateListLength);
                 return;
             }
         }
     }
 
-    private boolean same(int start1, int end1, int start2, int end2) {
-        if ((end1 - start1) != (end2 - start2)) return false;
-        for (int i = 0; i < end1 - start1; i++) {
-
-            /**
-             * We determine equality based on the functions alone. As long
-             * as all subPatterns elements occur at the same offset, we
-             * only require that the functions at all other points are
-             * the same. Recall that the `function` value for an element
-             * is -1 if the type is a SUB_PATTERN.
-             */
+    /**
+     * Merges all elements of the other sequence with the elements of this sequence.
+     * Both sequences must be the same length.
+     * @param otherSequence sequence whose elements are to merged into the current sequence.
+     */
+    public void mergeSequence(Sequence otherSequence) {
+        for (int i = 0; i < otherSequence.sequence.size(); i++) {
+            SequenceElement thisElement = sequence.get(i);
+            SequenceElement otherElement = otherSequence.sequence.get(i);
+            if (thisElement.getType() != otherElement.getType())
+                System.out.println("Error: Trying to merge non-equivalent sequences");
             
-            if (sequence.get(start1 + i).getFunction() 
-             != sequence.get(start2 + i).getFunction()) return false;
+            if (thisElement.getType() == Constants.TYPE_SUB_PATTERNS) {
+                thisElement.addAll(otherElement);
+            }
         }
-
-        return true;
     }
 
+    /**
+     * Similar to the case of `same`, only the elemnts of TYPE_FUNCTION determine the 
+     * hash of sequence. The location of the elements of TYPE_SUB_PATTERN affect the 
+     * hash, but not the contents of the subPatterns, hence why we fill in those positions
+     * with a constant value when updating the hashing function.
+     */
     public int hash() {
         Hasher hasher = Hashing.murmur3_32(Constants.MURMUR_SEED).newHasher();
-        for (int i = 0; i < sequenceEnd; i++) {
+        for (int i = 0; i < sequence.size(); i++) {
             SequenceElement e = sequence.get(i);
 
-            /**
-             * Similar to the case of `same`, only the elemnts of TYPE_FUNCTION
-             * determine the hash of sequence. The location of the elements
-             * of TYPE_SUB_PATTERN affect the hash, but not the contents of the
-             * subPatterns.
-             */
-
-            int updateVal = e.getType() == Constants.TYPE_FUNCTION ? e.getFunction() : -1;
+            int updateVal = e.getType() == Constants.TYPE_FUNCTION ? e.getFunction() : Constants.PATTERN_BASE;
             hasher.putInt(updateVal);
         }
 
         return hasher.hash().asInt();
     }
 
+    /**
+     * Creates a clone of this sequence with all the sequenceElements of type 
+     * Constants.TYPE_SUB_PATTERN being empty. This clone will be equivalent 
+     * to the current sequence.
+     */
+    public Sequence createEmptyClone() {
+        Sequence emptyClone = new Sequence();
+        for (SequenceElement element : sequence) {
+            if (element.getType() == Constants.TYPE_FUNCTION) {
+                emptyClone.add(element);
+            } else {
+                emptyClone.add(new SequenceElement());
+            }
+        }
+
+        return emptyClone;
+    }
+
     @Override
     public String toString() {
-        crop();
-
         StringBuilder s = new StringBuilder();
         s.append("[");
         String[] sequenceElementStrings = new String[sequence.size()];
@@ -104,7 +110,31 @@ public class Sequence {
         return s.toString();
     }
 
-    private void crop() {
+    /**
+     * We determine sequenceEquivalent based on the functions alone. As long as all 
+     * subPattern elements occur at the positions, we only require that the functions 
+     * at all other position be same.
+     */
+    private boolean same(int start1, int end1, int start2, int end2) {
+        if ((end1 - start1) != (end2 - start2)) return false;
+        for (int i = 0; i < end1 - start1; i++) {
+
+            /**
+             * Recall that the `function` value for an element is -1 if the type is a SUB_PATTERN,
+             * so to make sure that both subsequences have SUB_PATTERN elements in the same
+             * positions, we can just verify the function values are equally -1.
+             */
+            if (sequence.get(start1 + i).getFunction() 
+             != sequence.get(start2 + i).getFunction()) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Removes all elements that come after sequenceEnd
+     */
+    private void cropEnd(int sequenceEnd) {
         for (int i = sequence.size() - 1; i >= sequenceEnd; i--)
             sequence.remove(i);
     }

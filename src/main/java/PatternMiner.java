@@ -88,7 +88,7 @@ public class PatternMiner {
      * @return pattern that backs the sequence in sequenceForLevel at `stackLevel`
      */
     private Pattern updatePatterns(int stackLevel) {
-        SequenceContainer oldContainer = sequenceForLevel.remove(currentStackLevel);
+        SequenceContainer oldContainer = sequenceForLevel.remove(stackLevel);
         Sequence sequence = oldContainer.getSequence();
         int sequenceHash = sequence.hash();
         if (!patterns.containsKey(sequenceHash)) {
@@ -97,6 +97,7 @@ public class PatternMiner {
             patterns.put(sequenceHash, pattern);
         }
         Pattern pattern = patterns.get(sequenceHash);
+        pattern.updatePatternSequence(sequence);
         pattern.addInstance(oldContainer.getStartTime(), oldContainer.getEndTime());
         return pattern;
     }

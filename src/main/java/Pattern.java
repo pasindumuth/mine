@@ -15,11 +15,15 @@ public class Pattern {
         this.patternID = patternID;
     }
 
+    public void updatePatternSequence(Sequence newSequence) {
+        sequence.mergeSequence(newSequence);
+    }
+
     public int getPatternID() {
         return patternID;
     }
 
-    public List<Long> getTracePosition() {
+    public List<Long> getStartTimes() {
         return startTimes;
     }
 
@@ -32,7 +36,8 @@ public class Pattern {
         durations.add(endTime - startTime);
     }
 
-    public void clearInstances() {
+    public void reset() {
+        sequence = sequence.createEmptyClone();
         startTimes = new ArrayList<>();
         durations = new ArrayList<>();
     }

@@ -35,7 +35,7 @@ public class Main {
             writer.close();
 
             for (Pattern pattern : patterns.values())
-                pattern.clearInstances();
+                pattern.reset();
         }
     }
 

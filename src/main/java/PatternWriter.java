@@ -23,16 +23,17 @@ public class PatternWriter {
         });
         
         for (Pattern pattern : patternList) {
+            if (pattern.getStartTimes().size() == 0) continue;
+            List<Long> startTimes = pattern.getStartTimes();
+            List<Long> durations = pattern.getDurations();
+
             writer.write("#############\n");
             writer.write(String.valueOf(pattern.getPatternID()) + ":\n");
             writer.write(pattern.toString() + "\n");
 
-            List<Long> tracePositions = pattern.getTracePosition();
-            List<Long> durations = pattern.getDurations();
-
-            writer.write(String.valueOf(tracePositions.size()) + " OCCURRENCES.\n");
-            for (int i = 0; i < tracePositions.size(); i++) {
-                writer.write(String.valueOf(tracePositions.get(i)));
+            writer.write(String.valueOf(startTimes.size()) + " OCCURRENCES.\n");
+            for (int i = 0; i < startTimes.size(); i++) {
+                writer.write(String.valueOf(startTimes.get(i)));
                 writer.write(" : ");
                 writer.write(String.valueOf(durations.get(i)));
                 writer.write("\n");
