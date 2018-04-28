@@ -5,14 +5,14 @@ import java.util.Map;
 public class SequenceElement {
 
     /**
-     * If `type` == Constants.TYPE_SUB_PATTERNS, then subPatterns is a 
-     * list of patternIDs, and`function` is -1. If `type` == Constants.TYPE_FUNCTION, 
-     * then subPatterns is null, and `function` is a functionID.
+     * If `type == Constants.TYPE_SUB_PATTERNS`, then `subPatterns` is not 
+     * null, and `function` is undefined. If `type == Constants.TYPE_FUNCTION`, 
+     * then `subPatterns` is null, and `function` is a functionID.
      */
     private int type;
 
     /**
-     * If this has `type` == Constants.TYPE_SUB_PATTERNS, then subPatterns is a map
+     * If this has `type == Constants.TYPE_SUB_PATTERNS`, then subPatterns is a map
      * that maps patternIDs to the number of times they occur for the given element.
      */
     private Map<Integer, Integer> subPatterns;

@@ -29,14 +29,12 @@ public class Sequence {
                 if (!same(i, sequenceEnd, i - candidateListLength, i)) continue;
                 
                 for (int i1 = i; i1 < sequenceEnd; i1++) {
-                    int i2 = i1 - candidateListLength;
-
                     if (sequence.get(i1).getType() == Constants.TYPE_SUB_PATTERNS) {
-                        sequence.get(i2).addAll(sequence.get(i1));
+                        sequence.get(i1 - candidateListLength).addAll(sequence.get(i1));
                     }
                 }
 
-                cropEnd(sequenceEnd - candidateListLength);
+                cropEnd(i);
                 return;
             }
         }
@@ -119,13 +117,11 @@ public class Sequence {
         if ((end1 - start1) != (end2 - start2)) return false;
         for (int i = 0; i < end1 - start1; i++) {
 
-            /**
-             * Recall that the `function` value for an element is -1 if the type is a SUB_PATTERN,
-             * so to make sure that both subsequences have SUB_PATTERN elements in the same
-             * positions, we can just verify the function values are equally -1.
-             */
-            if (sequence.get(start1 + i).getFunction() 
-             != sequence.get(start2 + i).getFunction()) return false;
+            if (sequence.get(start1 + i).getType() == sequence.get(start2 + i).getType() &&
+                (sequence.get(start2 + i).getType() == Constants.TYPE_SUB_PATTERNS ||
+                sequence.get(start1 + i).getFunction() == sequence.get(start2 + i).getFunction())) {
+                return false;
+            }
         }
 
         return true;

@@ -62,7 +62,7 @@ public class Main {
             if (dir == Constants.FUNCTION_EXIT) {
                 int lastFunctionID = funcStack.remove(funcStack.size() - 1);
                 if (lastFunctionID != functionID) 
-                    System.out.println("Error: existed a function without entering it");
+                    System.out.println("Error: exited a function without entering it");
 
                 long startTime = startTimes.remove(startTimes.size() - 1);
                 miner.processEvent(functionID, funcStack.size(), startTime, time);
