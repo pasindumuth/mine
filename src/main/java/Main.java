@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,9 +42,6 @@ public class Main {
         throws IOException {
         
         PatternMiner miner = new PatternMiner(currentPatterns);
-        ArrayList<Integer> funcStack = new ArrayList<>();
-        ArrayList<Long> startTimes = new ArrayList<>();
-
         String line = reader.readLine();
 
         int count = 0;
@@ -59,17 +55,7 @@ public class Main {
             int dir = Integer.parseInt(record[1]);
             long time = Long.parseLong(record[2]);
 
-            if (dir == Constants.FUNCTION_EXIT) {
-                int lastFunctionID = funcStack.remove(funcStack.size() - 1);
-                if (lastFunctionID != functionID) 
-                    System.out.println("Error: exited a function without entering it");
-
-                long startTime = startTimes.remove(startTimes.size() - 1);
-                miner.processEvent(functionID, funcStack.size(), startTime, time);
-            } else {
-                funcStack.add(functionID);
-                startTimes.add(time);
-            }
+            miner.processEvent(functionID, dir, time);
 
             line = reader.readLine();
         }

@@ -1,88 +1,38 @@
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class PatternMiner {
-    private int currentStackLevel;
-    private Map<Integer, Sequence> sequenceForLevel;
+    private ArrayList<SequenceContainer> sequenceForLevel;
+    private int stackLevel;
     private Map<Integer, Pattern> patterns;
 
     public PatternMiner(Map<Integer, Pattern> patterns) {
-        this.currentStackLevel = 0;
-        this.sequenceForLevel = new HashMap<>();
+        this.sequenceForLevel = new ArrayList<>();
+        this.sequenceForLevel.add(new SequenceContainer(new Sequence(), 0)); // dummy sequence to handle base functions
+        this.stackLevel = 0;
         this.patterns = patterns;
     }
 
-    /**
-     * This function takes in the exit events of a trace in order, and mines patterns with efficient
-     * memory usage.
-     * @param functionID the preprocessed function ID; an integer that maps uniques to a function
-     * @param stackLevel the stack level of the exist event. More precisely, the total number of
-     *                   function calls until and including this point that have entered but not exited.
-     * @param startTime the start time of the particular function call
-     * @param endTime the end time of the particular function call; the time of the exit event
-     */
-    public void processEvent(int functionID, int stackLevel, long startTime, long endTime) {
-
-        /**
-         * At any point, `sequenceForLevel` will have an entry for all stack levels >= 0 
-         * and <= `currentStackLevel` that have had a function execute, but still haven't 
-         * had the base function exit yet. Thus, `sequenceForLevel` keeps track of the 
-         * incomplete pattern instances in the trace.
-         */
-
-        if (stackLevel > currentStackLevel) {
-            Sequence sequence = new Sequence();
-            sequence.setFunction(functionID);
-            Pattern pattern = updatePatterns(sequence, startTime, endTime);
-
-            Sequence base = new Sequence();
-            base.addPatternID(pattern.getPatternID());
-            
-            sequenceForLevel.put(stackLevel, base);
-        
-        } else if (stackLevel == currentStackLevel) {
-
-            /**
-             * There is only one circumstance when there would not
-             * already be SequenceContainer for this level. This is when
-             * at the very start of the trace, the execution enters a function
-             * and then immediately exits.
-             */
-
-            Sequence sequence = new Sequence();
-            sequence.setFunction(functionID);
-            Pattern pattern = updatePatterns(sequence, startTime, endTime);
-
-            if (!sequenceForLevel.containsKey(stackLevel)) {
-                Sequence base = new Sequence();
-                sequenceForLevel.put(stackLevel, base);
-            }
-
-            Sequence base = sequenceForLevel.get(stackLevel);
-            base.addPatternID(pattern.getPatternID());
-            base.compressVeryLossy();
-            
+    public void processEvent(int functionID, int dir, long time) {
+        if (dir == Constants.FUNCTION_ENTER) {
+            Sequence newSequence = new Sequence();
+            newSequence.setFunction(functionID);
+            SequenceContainer container = new SequenceContainer(newSequence, time);
+            stackLevel++;
+            if (stackLevel < sequenceForLevel.size()) sequenceForLevel.set(stackLevel, container);
+            else sequenceForLevel.add(container);
         } else {
-            if (currentStackLevel - stackLevel > 1)
-                System.out.println("Warning: jumping down more than one stack level.");
+            // The highest sequence is finished. Update the set of patterns.
+            SequenceContainer finishedContainer = sequenceForLevel.get(stackLevel);
+            stackLevel--;
+            finishedContainer.setEndTime(time);
+            Pattern pattern = updatePatterns(finishedContainer);
             
-            Sequence base = sequenceForLevel.remove(currentStackLevel);
-            base.setFunction(functionID);
-            Pattern pattern = updatePatterns(base, startTime, endTime);
-
-            int patternID = pattern.getPatternID();
-
-            if (!sequenceForLevel.containsKey(stackLevel)) {
-                Sequence nextBase = new Sequence();
-                sequenceForLevel.put(stackLevel, nextBase);
-            }
-        
-            Sequence nextBase = sequenceForLevel.get(stackLevel);
-            nextBase.addPatternID(patternID);
-            nextBase.compressVeryLossy();
+            // Update sequence below with the new pattern instance.
+            Sequence nextSequence = sequenceForLevel.get(stackLevel).getSequence();
+            nextSequence.addPatternID(pattern.getPatternID());
+            nextSequence.compressVeryLossy();
         }
-
-        currentStackLevel = stackLevel;
     }
 
     public Map<Integer, Pattern> getPatterns() {
@@ -97,11 +47,12 @@ public class PatternMiner {
      * @return pattern that backs the sequence in sequenceForLevel at `stackLevel`
      */
 
-    private Pattern updatePatterns(Sequence sequence, long startTime, long endTime) {
+    private Pattern updatePatterns(SequenceContainer container) {
+        Sequence sequence = container.getSequence();
         int sequenceHash = sequence.hash();
         Pattern pattern;
         if (!patterns.containsKey(sequenceHash)) {
-            int newPatternID = sequence.isSingleFunction() ? sequence.getFunction() : Pattern.nextTruePatternID();
+            int newPatternID = Pattern.nextPatternID();
             pattern = new Pattern(sequence, newPatternID);
             patterns.put(sequenceHash, pattern);
         } else {
@@ -109,7 +60,7 @@ public class PatternMiner {
             pattern.updatePatternSequence(sequence);
         }
 
-        pattern.addInstance(startTime, endTime);
+        pattern.addInstance(container.getStartTime(), container.getEndTime());
         return pattern;
     }
 }

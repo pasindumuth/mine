@@ -8,9 +8,9 @@ public class Pattern {
     private List<Long> startTimes;
     private List<Long> durations;
 
-    private static int nextPatternID = Constants.PATTERN_BASE;
+    private static int nextPatternID = 0;
 
-    public static int nextTruePatternID() {
+    public static int nextPatternID() {
         return nextPatternID++;
     }
 
@@ -27,6 +27,10 @@ public class Pattern {
 
     public int getPatternID() {
         return patternID;
+    }
+
+    public Sequence getSequence() {
+        return sequence;
     }
 
     public List<Long> getStartTimes() {
@@ -50,14 +54,5 @@ public class Pattern {
 
     public int sequenceHash() {
         return this.sequence.hash();
-    }
-
-    public boolean isSingleFunction() {
-        return sequence.isSingleFunction();
-    }
-
-    @Override
-    public String toString() {
-        return this.sequence.toString();
     }
 }

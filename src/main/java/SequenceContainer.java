@@ -4,13 +4,12 @@ public class SequenceContainer {
     private long startTime;
     private long endTime;
 
-    public SequenceContainer(Sequence sequence, long startTime, long endTime) {
+    public SequenceContainer(Sequence sequence, long startTime) {
         this.sequence = sequence;
         this.startTime = startTime;
-        this.endTime = endTime;
     }
 
-    public void updateEndTime(long endTime) {
+    public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
 
