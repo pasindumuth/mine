@@ -74,7 +74,6 @@ public class Main {
             line = reader.readLine();
         }
 
-        miner.finish();
         return miner.getPatterns();
     }
 }

@@ -3,7 +3,7 @@ import java.util.Map;
 
 public class PatternMiner {
     private int currentStackLevel;
-    private Map<Integer, SequenceContainer> sequenceForLevel;
+    private Map<Integer, Sequence> sequenceForLevel;
     private Map<Integer, Pattern> patterns;
 
     public PatternMiner(Map<Integer, Pattern> patterns) {
@@ -25,16 +25,20 @@ public class PatternMiner {
 
         /**
          * At any point, `sequenceForLevel` will have an entry for all stack levels >= 0 
-         * and <= `currentStackLevel` that have had a function execute but, still haven't 
+         * and <= `currentStackLevel` that have had a function execute, but still haven't 
          * had the base function exit yet. Thus, `sequenceForLevel` keeps track of the 
          * incomplete pattern instances in the trace.
          */
 
         if (stackLevel > currentStackLevel) {
             Sequence sequence = new Sequence();
-            sequence.add(new SequenceElement(functionID));
-            SequenceContainer container = new SequenceContainer(sequence, startTime, endTime);
-            sequenceForLevel.put(stackLevel, container);
+            sequence.setFunction(functionID);
+            Pattern pattern = updatePatterns(sequence, startTime, endTime);
+
+            Sequence base = new Sequence();
+            base.addPatternID(pattern.getPatternID());
+            
+            sequenceForLevel.put(stackLevel, base);
         
         } else if (stackLevel == currentStackLevel) {
 
@@ -45,52 +49,40 @@ public class PatternMiner {
              * and then immediately exits.
              */
 
+            Sequence sequence = new Sequence();
+            sequence.setFunction(functionID);
+            Pattern pattern = updatePatterns(sequence, startTime, endTime);
+
             if (!sequenceForLevel.containsKey(stackLevel)) {
-                SequenceContainer container = new SequenceContainer(
-                    new Sequence(), startTime, startTime);
-                sequenceForLevel.put(stackLevel, container);
+                Sequence base = new Sequence();
+                sequenceForLevel.put(stackLevel, base);
             }
 
-            SequenceContainer container = sequenceForLevel.get(stackLevel);
-            Sequence sequence = container.getSequence();
-            sequence.add(new SequenceElement(functionID));
-            sequence.compressVeryLossy();
-            container.updateEndTime(endTime);
+            Sequence base = sequenceForLevel.get(stackLevel);
+            base.addPatternID(pattern.getPatternID());
+            base.compressVeryLossy();
             
         } else {
             if (currentStackLevel - stackLevel > 1)
                 System.out.println("Warning: jumping down more than one stack level.");
             
-            Pattern pattern = updatePatterns(currentStackLevel);
+            Sequence base = sequenceForLevel.remove(currentStackLevel);
+            base.setFunction(functionID);
+            Pattern pattern = updatePatterns(base, startTime, endTime);
+
             int patternID = pattern.getPatternID();
 
             if (!sequenceForLevel.containsKey(stackLevel)) {
-                SequenceContainer container = new SequenceContainer(
-                    new Sequence(), startTime, startTime);
-                sequenceForLevel.put(stackLevel, container);
+                Sequence nextBase = new Sequence();
+                sequenceForLevel.put(stackLevel, nextBase);
             }
         
-            SequenceContainer container = sequenceForLevel.get(stackLevel);
-            Sequence sequence = container.getSequence();
-
-            SequenceElement functionElement = new SequenceElement(functionID);
-            SequenceElement patternElement = new SequenceElement();
-            patternElement.add(patternID);
-
-            sequence.add(functionElement);
-            sequence.add(patternElement);
-            sequence.compressVeryLossy();
-
-            container.updateEndTime(endTime);
+            Sequence nextBase = sequenceForLevel.get(stackLevel);
+            nextBase.addPatternID(patternID);
+            nextBase.compressVeryLossy();
         }
 
         currentStackLevel = stackLevel;
-    }
-
-    public void finish() {
-        for (int stackLevel = 0; stackLevel <= currentStackLevel; stackLevel++)
-            if (sequenceForLevel.containsKey(stackLevel))
-                updatePatterns(stackLevel);
     }
 
     public Map<Integer, Pattern> getPatterns() {
@@ -104,13 +96,12 @@ public class PatternMiner {
      * @param stackLevel stack level to extract the sequence at
      * @return pattern that backs the sequence in sequenceForLevel at `stackLevel`
      */
-    private Pattern updatePatterns(int stackLevel) {
-        SequenceContainer oldContainer = sequenceForLevel.remove(stackLevel);
-        Sequence sequence = oldContainer.getSequence();
+
+    private Pattern updatePatterns(Sequence sequence, long startTime, long endTime) {
         int sequenceHash = sequence.hash();
         Pattern pattern;
         if (!patterns.containsKey(sequenceHash)) {
-            int newPatternID = Constants.PATTERN_BASE + patterns.size();
+            int newPatternID = sequence.isSingleFunction() ? sequence.getFunction() : Pattern.nextTruePatternID();
             pattern = new Pattern(sequence, newPatternID);
             patterns.put(sequenceHash, pattern);
         } else {
@@ -118,7 +109,7 @@ public class PatternMiner {
             pattern.updatePatternSequence(sequence);
         }
 
-        pattern.addInstance(oldContainer.getStartTime(), oldContainer.getEndTime());
+        pattern.addInstance(startTime, endTime);
         return pattern;
     }
 }

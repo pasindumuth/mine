@@ -8,6 +8,12 @@ public class Pattern {
     private List<Long> startTimes;
     private List<Long> durations;
 
+    private static int nextPatternID = Constants.PATTERN_BASE;
+
+    public static int nextTruePatternID() {
+        return nextPatternID++;
+    }
+
     public Pattern(Sequence sequence, int patternID) {
         this.sequence = sequence;
         this.startTimes = new ArrayList<>();
@@ -44,6 +50,10 @@ public class Pattern {
 
     public int sequenceHash() {
         return this.sequence.hash();
+    }
+
+    public boolean isSingleFunction() {
+        return sequence.isSingleFunction();
     }
 
     @Override

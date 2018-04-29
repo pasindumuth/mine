@@ -23,6 +23,7 @@ public class PatternWriter {
         });
         
         for (Pattern pattern : patternList) {
+            if (pattern.isSingleFunction()) continue;
             if (pattern.getStartTimes().size() == 0) continue;
             List<Long> startTimes = pattern.getStartTimes();
             List<Long> durations = pattern.getDurations();
