@@ -1,9 +1,6 @@
 import java.util.ArrayList;
 import java.util.Map;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-
 public class Sequence {
 
     /**
@@ -15,12 +12,10 @@ public class Sequence {
      */
     
     private int functionID;
-    private ArrayList<Integer> shape;
-    private ArrayList<Integer> count;
+    private ArrayList<SequenceElement> shape;
 
     public Sequence() {
         this.shape = new ArrayList<>();
-        this.count = new ArrayList<>();
     }
 
     public void setFunction(int functionID) {
@@ -32,10 +27,13 @@ public class Sequence {
     }
 
     public void addPatternID(Integer patternID) {
-        shape.add(patternID);
-        count.add(1);
+        shape.add(new SequenceElement(patternID));
     }
 
+    /**
+     * Lossy compression alogrithm. Checks if there is a suffix that is equivalent 
+     * to the suffix of the same length in the prefix, and removes it.
+     */
     public void compressVeryLossy() {
         int sequenceEnd = shape.size();
         for (int i = sequenceEnd - 1; i > 0; i--) {
@@ -44,12 +42,12 @@ public class Sequence {
 
             int j = i;
             for (; j < sequenceEnd; j++) {
-                if (!shape.get(j).equals(shape.get(j - candidateListLength))) break;
+                if (!shape.get(j - candidateListLength).canMerge(shape.get(j))) break;
             }
 
             if (j < sequenceEnd) continue;
             for (j = i; j < sequenceEnd; j++) {
-                count.set(j - candidateListLength, count.get(j - candidateListLength) + count.get(j));
+                shape.get(j - candidateListLength).merge(shape.get(j));
             }
 
             cropEnd(i);
@@ -66,44 +64,103 @@ public class Sequence {
     }
 
     /**
+     * Sequences can be merged if they are the same length and the SequenceElements 
+     * can be merged
+     */
+    public boolean canMerge(Sequence otherSequence) {
+        if (this.functionID != otherSequence.functionID) 
+            return false;
+
+        if (this.shape.size() != otherSequence.shape.size())
+            return false;
+        
+        for (int i = 0; i < this.shape.size(); i++) {
+            if (!this.shape.get(i).canMerge(otherSequence.shape.get(i)))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Adds the counts of the other shape to this shape. The sequences must both have
      * the same list shape.
+     * 
+     * WARNING: this operation might break the PATTERN_SIMILARITY_THRESHOLD
+     * requirement in the SequenceElements. We must be sure the elements can be 
+     * merged before merging.
      * @param otherSequence shape whose elements are to merged into the current shape.
      */
-    public void mergeSequence(Sequence otherSequence) {
-        if (shape.size() != otherSequence.shape.size())
-            System.out.println("Error: Trying to merge non equivalent sequences; different length.");
+    public void merge(Sequence otherSequence) {
+        if (Constants.RUN_MODE == Constants.DEBUG) {
+            if (this.shape.size() != otherSequence.shape.size())
+                System.out.println("Error: Trying to merge non equivalent sequences; different length.");
+        }
 
         for (int i = 0; i < this.shape.size(); i++) {
-            if (!shape.get(i).equals(otherSequence.shape.get(i)))
-                System.out.println("Error: Trying to merge non equivalent sequences; different patternID.");
+            if (Constants.RUN_MODE == Constants.DEBUG) {
+                if (!this.shape.get(i).canMerge(otherSequence.shape.get(i)))
+                    System.out.println("Error: Trying to merge non equivalent sequences; different patternID.");
+            }
 
-            count.set(i, count.get(i) + otherSequence.count.get(i));
+            this.shape.get(i).merge(otherSequence.shape.get(i));
         }
     }
 
     /**
-     * Hash function calculated by base function and pattern sequence.
+     * Computes distance between this sequence and `otherSequence`. We require
+     * this distance to be a metric.
+     * 
+     * This distance we choose is the edit distance of the shapes. The elements of the 
+     * shapes are SequenceElements. Since SequenceElements form a metric space, it can be 
+     * proven that edit distance is a metric. Thus, function turns the set of all sequences 
+     * into a metric space.
+     * 
+     * We would also like for shapes with different base functions to be considered very 
+     * far away (and thus never be grouped together similar), so we add a large penalty 
+     * if the base function differ (this penalty, couples with the edit distance, still
+     * results in a metric).
      */
-    public int hash() {
-        Hasher hasher = Hashing.murmur3_32(Constants.MURMUR_SEED).newHasher();
-        hasher.putInt(functionID);
-        for (int i = 0; i < shape.size(); i++) {
-            hasher.putInt(shape.get(i));
+    public double getDistance(Sequence otherSequence) {
+
+        // Compute the edit distance between the shapes
+        SequenceElement nullSequenceElement = new SequenceElement(PatternManager.NULL_PATTERN_ID);
+
+        ArrayList<SequenceElement> s1 = this.shape;
+        ArrayList<SequenceElement> s2 = otherSequence.shape;
+
+        double[] ed = new double[s2.size() + 1]; // already initialized to 0
+        ed[0] = 0;
+        for (int i = 1; i < s2.size() + 1; i++) {
+            ed[i] = ed[i - 1] + s2.get(i - 1).getDistance(nullSequenceElement);
+        }
+        
+        for (int i = 1; i < s1.size() + 1; i++) {
+            double prevEd = ed[0];
+            ed[0] += s1.get(i - 1).getDistance(nullSequenceElement);
+            for (int j = 1; j < s2.size() + 1; j++) {
+                double d1 = prevEd + s2.get(j - 1).getDistance(s1.get(i - 1));
+                double d2 = ed[j] + s1.get(i - 1).getDistance(nullSequenceElement);
+                double d3 = ed[j - 1] + s2.get(j - 1).getDistance(nullSequenceElement);
+
+                prevEd = ed[j];
+                ed[j] = Math.min(Math.min(d1, d2), d3);
+            }
         }
 
-        return hasher.hash().asInt();
+        double shapeDistance = ed[s2.size()];
+        double functionDistance = getFunctionDistance(this.functionID, otherSequence.functionID);
+        return shapeDistance + functionDistance;
     }
 
     /**
-     * Creates a a clone with all counts set to 0.
+     * Creates a clone with all counts set to 0.
      */
     public Sequence createEmptyClone() {
         Sequence emptyClone = new Sequence();
         emptyClone.functionID = functionID;
-        for (int i = 0; i < shape.size(); i++) {
-            emptyClone.shape.add(shape.get(i));
-            emptyClone.count.add(0);
+        for (int i = 0; i < this.shape.size(); i++) {
+            emptyClone.shape.add(shape.get(i).createEmptyClone());
         }
 
         return emptyClone;
@@ -112,12 +169,10 @@ public class Sequence {
     public String toString(Map<Integer, Integer> singleFunctions) {
         StringBuilder s = new StringBuilder();
         s.append("{");
-        String[] sequenceElementStrings = new String[shape.size() + 1];
-        sequenceElementStrings[0] = String.valueOf(functionID);
+        ArrayList<String> sequenceElementStrings = new ArrayList<>();
+        sequenceElementStrings.add(String.valueOf(functionID));
         for (int i = 0; i < shape.size(); i++) {
-            int id = singleFunctions.containsKey(shape.get(i)) ? singleFunctions.get(shape.get(i)) : shape.get(i) + Constants.PATTERN_BASE;
-            sequenceElementStrings[i + 1] = "(" + String.valueOf(id)
-                                          + " => " + count.get(i).toString() + ")";
+            sequenceElementStrings.add(shape.get(i).toString(singleFunctions));
         }
 
         s.append(String.join(", ", sequenceElementStrings));
@@ -130,10 +185,16 @@ public class Sequence {
      * Removes all elements that come after sequenceEnd
      */
     private void cropEnd(int sequenceEnd) {
-        for (int i = shape.size() - 1; i >= sequenceEnd; i--) {
+        for (int i = shape.size() - 1; i >= sequenceEnd; i--) 
             shape.remove(i);
-            count.remove(i);
-            assert shape.size() == count.size();
-        }
+    }
+
+    private double getFunctionDistance(int f1, int f2) {
+        if (f1 == f2) 
+            return 0.0;
+        else if (f1 == Constants.NULL_FUNCTION_ID) 
+            return Constants.NULL_FUNCTION_DISTANCE;
+        else
+            return 1.0;
     }
 }

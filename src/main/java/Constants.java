@@ -13,8 +13,18 @@ public class Constants {
     public static final int MURMUR_SEED = 16109143;
 
     public static final int PATTERN_BASE = 1000000;
+    public static final int NULL_FUNCTION_ID = -1;
+    public static final double NULL_FUNCTION_DISTANCE = 0.5;
+    
+    public static final int PATTERN_SIMILARITY_THRESHOLD = 1;
 
     // Data
     public static final int FUNCTION_ENTER = 0;
     public static final int FUNCTION_EXIT = 1;
+
+    // Run Mode
+    public static final int NORMAL = 0; 
+    public static final int DEBUG = 1;
+
+    public static int RUN_MODE = NORMAL;
 }

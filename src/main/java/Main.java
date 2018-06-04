@@ -1,47 +1,34 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Map<Integer, Pattern> patterns = new HashMap<>();
+        PatternManager.initializeNullPattern();
 
         for (int i = 1;; i++) {
-            BufferedReader reader;
-            try {
-                reader = new BufferedReader(
-                    new FileReader(Constants.THREAD_DIR + "thread." + String.valueOf(i) + ".trace"));
-            } catch (FileNotFoundException e) {
-                break;
-            }
+            BufferedReader reader = new BufferedReader(
+                new FileReader(Constants.THREAD_DIR + "thread." + String.valueOf(i) + ".trace"));
 
             System.out.println("Starting to mine thread: " + String.valueOf(i));
-            patterns = mineThread(patterns, reader);
-    
+            mineThread(reader);
+            reader.close();
+
             BufferedWriter writer = new BufferedWriter(
                 new FileWriter(Constants.PATTERN_DIR + "thread." + String.valueOf(i) + ".patterns"));
                 
-            PatternWriter patternWriter = new PatternWriter(patterns, writer);
-            patternWriter.write();
-    
-            reader.close();
+            PatternManager.flushPatterns(writer);
             writer.close();
-
-            for (Pattern pattern : patterns.values())
-                pattern.reset();
         }
     }
 
-    public static Map<Integer, Pattern> mineThread(Map<Integer, Pattern> currentPatterns, BufferedReader reader) 
+    public static void mineThread(BufferedReader reader) 
         throws IOException {
         
-        PatternMiner miner = new PatternMiner(currentPatterns);
+        PatternMiner miner = new PatternMiner();
         String line = reader.readLine();
 
         int count = 0;
@@ -59,7 +46,5 @@ public class Main {
 
             line = reader.readLine();
         }
-
-        return miner.getPatterns();
     }
 }
