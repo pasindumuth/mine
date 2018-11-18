@@ -37,6 +37,7 @@ public class Sequence {
     public void compressVeryLossy() {
         int sequenceEnd = shape.size();
         for (int i = sequenceEnd - 1; i > 0; i--) {
+            // The shape.subList(i, sequenceEnd) is the current candidate list for compression.
             int candidateListLength = sequenceEnd - i;
             if (i - candidateListLength < 0) return;
 
@@ -65,18 +66,21 @@ public class Sequence {
 
     /**
      * Sequences can be merged if they are the same length and the SequenceElements 
-     * can be merged
+     * can be merged.
      */
     public boolean canMerge(Sequence otherSequence) {
-        if (this.functionID != otherSequence.functionID) 
+        if (this.functionID != otherSequence.functionID) {
             return false;
+        }
 
-        if (this.shape.size() != otherSequence.shape.size())
+        if (this.shape.size() != otherSequence.shape.size()) {
             return false;
+        }
         
         for (int i = 0; i < this.shape.size(); i++) {
-            if (!this.shape.get(i).canMerge(otherSequence.shape.get(i)))
+            if (!this.shape.get(i).canMerge(otherSequence.shape.get(i))) {
                 return false;
+            }
         }
 
         return true;
@@ -89,7 +93,7 @@ public class Sequence {
      * WARNING: this operation might break the PATTERN_SIMILARITY_THRESHOLD
      * requirement in the SequenceElements. We must be sure the elements can be 
      * merged before merging.
-     * @param otherSequence shape whose elements are to merged into the current shape.
+     * @param otherSequence shape whose elements are to be merged into the current shape.
      */
     public void merge(Sequence otherSequence) {
         if (Constants.RUN_MODE == Constants.DEBUG) {
@@ -112,19 +116,24 @@ public class Sequence {
      * this distance to be a metric.
      * 
      * This distance we choose is the edit distance of the shapes. The elements of the 
-     * shapes are SequenceElements. Since SequenceElements form a metric space, it can be 
-     * proven that edit distance is a metric. Thus, function turns the set of all sequences 
-     * into a metric space.
+     * shapes are SequenceElements. Since SequenceElements (with the nullSequenceElement) form 
+     * a metric space, it can be proven that edit distance is a metric. Thus, this function 
+     * turns the set of all sequences into a metric space.
      * 
      * We would also like for shapes with different base functions to be considered very 
      * far away (and thus never be grouped together similar), so we add a large penalty 
-     * if the base function differ (this penalty, couples with the edit distance, still
+     * if the base function differ (this penalty, coupled with the edit distance, still
      * results in a metric).
+     * 
+     * Research Notes: prove the above, and prove that the null pattern extension is also a metric.
+     * Note that the addition of null must still make this a metric, which is possible since
+     * the distances between existing elements were <= 1.0f.
      */
     public double getDistance(Sequence otherSequence) {
 
         // Compute the edit distance between the shapes
-        SequenceElement nullSequenceElement = new SequenceElement(PatternManager.NULL_PATTERN_ID);
+        // TO-DO: Doc how null pattern, and null sequence element, form metric spaces just he same.
+        SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement();
 
         ArrayList<SequenceElement> s1 = this.shape;
         ArrayList<SequenceElement> s2 = otherSequence.shape;
@@ -189,6 +198,11 @@ public class Sequence {
             shape.remove(i);
     }
 
+    /**
+     * This is a separate metric over the set of function ids. All non null function are 
+     * distance 1.0 away, while null is some <= 1.0 distance away. We can verify easily
+     * this forms a metric.
+     */
     private double getFunctionDistance(int f1, int f2) {
         if (f1 == f2) 
             return 0.0;

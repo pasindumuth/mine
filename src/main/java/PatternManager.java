@@ -5,6 +5,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * At any given time, we have metric space of patternIDs containing the zeroth pattern, which then 
+ * generates a metric space of SequenceElements, which finally generates a metric space of Sequences.
+ * Importantly, if we extend the patternID metric space by one patternID such that the old distances
+ * stay preserved, we note that the new SequenceElement and Sequences metric spaces are extension of
+ * the old ones such that their old distances stay preserved. This is important because it means that
+ * if we defined the patternID metric based on their shapes (which are Sequences), extending the patternID
+ * metric space doesn't maintains it's relationship with the pattern shapes.
+ * 
+ * It's confusing that the patternID metric is defined in terms Sequences, because then it seems
+ * like the definitions are cyclic. We emphasize that the fundamental metric space is over the pattern *IDs*,
+ * and that the significance of the pattern's shape here is in how it provides a canonical means of extending
+ * the metric over patternIDs when a new pattern get's added.
+ * 
+ * TO-DO: we care about the above because in the end, we end up with a patternID metric space, with shapes
+ * assigned to the patterns over the course of the data processing such that the SequenceElement properties hold,
+ * and shape distances of the patterns stay faithful to their defined distances. It the shapes we want at the end,
+ * after all, and having these properties remain is the whole point.
+ */
 public class PatternManager {
 
     /**
@@ -13,17 +32,19 @@ public class PatternManager {
      * maintains the following properites:
      * 1. patternDistances[i][j] = patternDistances[j][i]
      * 2. patternDistances[i][i] = 0
-     * 3. patternDistances[i][j] <= patternDistances[i][k] + patternDistances[k][j];
+     * 3. patternDistances[i][j] <= patternDistances[i][k] + patternDistances[k][j]
      */
     private static ArrayList<ArrayList<Double>> patternDistances = new ArrayList<>();
 
     /**
-     * Null pattern has uses for calculating distance.
+     * TO-DO: don't call this null. Null has a history of breaking specification of what it represents.
+     * This first pattern has all the properties of any other pattern. It's just the first, and has the 
+     * role of being the filler pattern in {@link Sequence#getDistance}
      */
     public static int NULL_PATTERN_ID = 0;
 
     /**
-     * Maps patternIDs to shape of the original instance of the pattern. `patternDistances`
+     * Maps patternIDs to shape of the original instance of the pattern. {@link #patternDistances}
      * is calculated using the original shapes.
      */
     private static ArrayList<Sequence> originalPatternShapes = new ArrayList<>();
@@ -42,6 +63,10 @@ public class PatternManager {
         return patternDistances.get(p1).get(p2);
     }
 
+    /**
+     * The null pattern is the first pattern in our set of patterns, and the first element
+     * of the pattern metric space.
+     */
     public static void initializeNullPattern() {
         Sequence nullPatternSequence = new Sequence();
         nullPatternSequence.setFunction(Constants.NULL_FUNCTION_ID);
@@ -67,6 +92,7 @@ public class PatternManager {
             }
         }
 
+        // We have encountered a new pattern
         int patternID = originalPatternShapes.size();
         Sequence originalPatternShape = sequence.createEmptyClone();
         originalPatternShapes.add(originalPatternShape);
@@ -79,7 +105,7 @@ public class PatternManager {
     }
 
     /**
-     * Computes the distance between `newShape` to the existing pattern shapes,
+     * Computes the distance between `newShape` and the existing pattern shapes,
      * and updates the distance map.
      * 
      * We use an edit distance based measure.

@@ -2,6 +2,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The `getDistance` method makes the set of SequenceElements (for set of PatternIDs that form a metric space)
+ * into a metric space. We use the SequenceElement gotten from createNullSequenceElement()
+ */
 public class SequenceElement {
 
     /**
@@ -22,6 +26,11 @@ public class SequenceElement {
     private SequenceElement() {
         patternIDCounts = new HashMap<>();
     };
+
+    /** Importantly, although we designate this SequenceElement as 'null', it is part of the metric space just the same. */
+    public static SequenceElement createNullSequenceElement() {
+        return new SequenceElement(PatternManager.NULL_PATTERN_ID);
+    }
 
     /**
      * Merges another element in. `patternIDs` will become the union,
@@ -63,7 +72,7 @@ public class SequenceElement {
      * this distance to be a metric.
      * 
      * This distance is defined as the Hausdorff distance on the set of nonempty
-     * subsets of patterns. In particular, the distance between elements e1 and e2 is:
+     * subsets of patterns. That is, the distance between elements e1 and e2 is:
      * d(e1, e2) = max{max_(p1 in e1){min_(p2 in e2){d(p1, p2)}}, max_(p2 in e2){min_(p1 in e1){d(p1, p2)}}}
      * 
      * Since the Hausdorff distance turns the set of non empty subsets of a metric space into 

@@ -1,17 +1,6 @@
-.vscode
-misc
-trace.txt
-
-.vscode
-.settings
-.gradle
-.classpath
-.project
 build
-bin
 
 data/*
-backup
 
 !data/threads
 data/threads/*
@@ -20,6 +9,23 @@ data/threads/*
 !data/patterns
 data/patterns/*
 !data/patterns/.keep
+
+.DS_Store
+
+# IDE
+
+*.iml
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+out
+
+.gradle
+.vscode
+.settings
+.classpath
+.project
+
+# temp
 
 *.bak
 notes
