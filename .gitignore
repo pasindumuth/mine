@@ -21,6 +21,7 @@ out
 
 .gradle
 .vscode
+.bin
 .settings
 .classpath
 .project

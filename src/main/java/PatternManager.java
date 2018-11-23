@@ -23,6 +23,16 @@ import java.util.HashMap;
  * assigned to the patterns over the course of the data processing such that the SequenceElement properties hold,
  * and shape distances of the patterns stay faithful to their defined distances. It the shapes we want at the end,
  * after all, and having these properties remain is the whole point.
+ * 
+ * TO-DO: refine. Null is really special. Go from PatternIDs (with null). Defines metric space over SequenceElements
+ * over PatternIDs null, along with the null Sequence Element. Now, we can use Sequence Metric Space Theorem to show
+ * sequences of non null SequenceElements form a metric space. 
+ * 
+ * Null pattern maps to empty sequence shape, and all other patterns have a Sequence which use only patternIDs prior 
+ * (except for null, which never occur in Sequences anyways), where distance between patternIDs is faithful to 
+ * the distance between shapes.
+ * 
+ * TO-DO: consider renaming this to "context"
  */
 public class PatternManager {
 
@@ -34,7 +44,7 @@ public class PatternManager {
      * 2. patternDistances[i][i] = 0
      * 3. patternDistances[i][j] <= patternDistances[i][k] + patternDistances[k][j]
      */
-    private static ArrayList<ArrayList<Double>> patternDistances = new ArrayList<>();
+    private ArrayList<ArrayList<Double>> patternDistances = new ArrayList<>();
 
     /**
      * TO-DO: don't call this null. Null has a history of breaking specification of what it represents.
@@ -47,33 +57,49 @@ public class PatternManager {
      * Maps patternIDs to shape of the original instance of the pattern. {@link #patternDistances}
      * is calculated using the original shapes.
      */
-    private static ArrayList<Sequence> originalPatternShapes = new ArrayList<>();
+    private ArrayList<Sequence> originalPatternShapes = new ArrayList<>();
 
     /**
      * Holds onto patterns as they evolve.
      */
-    private static ArrayList<Pattern> currentPatterns = new ArrayList<>();
+    private ArrayList<Pattern> currentPatterns = new ArrayList<>();
 
-    /**
-     * @param p1 first patternID
-     * @param p2 second patternID
-     * @return distance between the patternIDs
-     */
-    public static double getDistance(int p1, int p2) {
-        return patternDistances.get(p1).get(p2);
+    public PatternManager() {
+        initializeNullPattern();
+    }
+
+    public ArrayList<Sequence> getNonNullShapes() {
+        ArrayList<Sequence> shapes = new ArrayList<>();
+        for (int i = 1; i < originalPatternShapes.size(); i++) {
+            shapes.add(originalPatternShapes.get(i));
+        }
+        return shapes;
+    }
+
+
+    public ArrayList<Sequence> getShapes() {
+        return originalPatternShapes;
     }
 
     /**
      * The null pattern is the first pattern in our set of patterns, and the first element
      * of the pattern metric space.
      */
-    public static void initializeNullPattern() {
-        Sequence nullPatternSequence = new Sequence();
+    public void initializeNullPattern() {
+        Sequence nullPatternSequence = new Sequence(this);
         nullPatternSequence.setFunction(Constants.NULL_FUNCTION_ID);
         SequenceContainer container = new SequenceContainer(nullPatternSequence, 0);
         container.setEndTime(0);
-        Pattern nullPattern = updatePatterns(container);
-        NULL_PATTERN_ID = nullPattern.getPatternID();
+        updatePatterns(container);
+    }
+
+    /**
+     * @param p1 first patternID
+     * @param p2 second patternID
+     * @return distance between the patternIDs
+     */
+    public double getDistance(int p1, int p2) {
+        return patternDistances.get(p1).get(p2);
     }
 
     /**
@@ -81,7 +107,7 @@ public class PatternManager {
      * record this sequence as an instance of that pattern. If not, create a 
      * new pattern, and record one instance.
      */
-    public static Pattern updatePatterns(SequenceContainer container) {
+    public Pattern updatePatterns(SequenceContainer container) {
         Sequence sequence = container.getSequence();
         for (int patternID = 0; patternID < currentPatterns.size(); patternID++) {
             Pattern pattern = currentPatterns.get(patternID);
@@ -110,7 +136,7 @@ public class PatternManager {
      * 
      * We use an edit distance based measure.
      */
-    private static void updateDistances(Sequence newShape) {
+    private void updateDistances(Sequence newShape) {
         ArrayList<Double> newDistances = new ArrayList<>();
         for (int i = 0; i < patternDistances.size(); i++) {
             double distance = newShape.getDistance(originalPatternShapes.get(i));
@@ -126,7 +152,7 @@ public class PatternManager {
      * Writes the current patterns to a the writer provided, and resets the current
      * patterns.
      */
-    public static void flushPatterns(BufferedWriter writer) throws IOException {
+    public void flushPatterns(BufferedWriter writer) throws IOException {
         Map<Integer, Integer> singleFunctions = new HashMap<>();
         for (Pattern pattern : currentPatterns) {
             Sequence sequence = pattern.getSequence();

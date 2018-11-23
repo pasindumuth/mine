@@ -11,10 +11,12 @@ public class Sequence {
      * of times a pattern in `shape` get's compressed.
      */
     
+    private PatternManager manager;
     private int functionID;
     private ArrayList<SequenceElement> shape;
 
-    public Sequence() {
+    public Sequence(PatternManager manager) {
+        this.manager = manager;
         this.shape = new ArrayList<>();
     }
 
@@ -27,7 +29,7 @@ public class Sequence {
     }
 
     public void addPatternID(Integer patternID) {
-        shape.add(new SequenceElement(patternID));
+        shape.add(new SequenceElement(manager, patternID));
     }
 
     /**
@@ -133,7 +135,7 @@ public class Sequence {
 
         // Compute the edit distance between the shapes
         // TO-DO: Doc how null pattern, and null sequence element, form metric spaces just he same.
-        SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement();
+        SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement(manager);
 
         ArrayList<SequenceElement> s1 = this.shape;
         ArrayList<SequenceElement> s2 = otherSequence.shape;
@@ -166,7 +168,7 @@ public class Sequence {
      * Creates a clone with all counts set to 0.
      */
     public Sequence createEmptyClone() {
-        Sequence emptyClone = new Sequence();
+        Sequence emptyClone = new Sequence(manager);
         emptyClone.functionID = functionID;
         for (int i = 0; i < this.shape.size(); i++) {
             emptyClone.shape.add(shape.get(i).createEmptyClone());
