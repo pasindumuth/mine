@@ -126,7 +126,13 @@ public class SequenceElement {
         ArrayList<String> countStrings = new ArrayList<>();
         for (Integer patternID : patternIDCounts.keySet()) {
             Integer count = patternIDCounts.get(patternID);
-            countStrings.add(String.valueOf(patternID) + " => " + String.valueOf(count));
+            // We want to print only the base functions for patterns that are single functions, but the fully 
+            // qualified patternID for standard patterns.
+            if (singleFunctions.containsKey(patternID)) {
+                countStrings.add(singleFunctions.get(patternID) + " => " + String.valueOf(count));
+            } else {
+                countStrings.add(String.valueOf(Constants.PATTERN_BASE + patternID) + " => " + String.valueOf(count));
+            }
         }
 
         s.append(String.join(", ", countStrings));

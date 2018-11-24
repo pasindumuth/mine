@@ -15,13 +15,10 @@ public class Sequence {
     private int functionID;
     private ArrayList<SequenceElement> shape;
 
-    public Sequence(PatternManager manager) {
+    public Sequence(PatternManager manager, int functionID) {
         this.manager = manager;
-        this.shape = new ArrayList<>();
-    }
-
-    public void setFunction(int functionID) {
         this.functionID = functionID;
+        this.shape = new ArrayList<>();
     }
 
     public int getFunction() {
@@ -134,7 +131,7 @@ public class Sequence {
     public double getDistance(Sequence otherSequence) {
 
         // Compute the edit distance between the shapes
-        // TO-DO: Doc how null pattern, and null sequence element, form metric spaces just he same.
+        // TO-DO: Doc how null pattern, and null sequence element, form metric spaces just the same.
         SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement(manager);
 
         ArrayList<SequenceElement> s1 = this.shape;
@@ -168,8 +165,7 @@ public class Sequence {
      * Creates a clone with all counts set to 0.
      */
     public Sequence createEmptyClone() {
-        Sequence emptyClone = new Sequence(manager);
-        emptyClone.functionID = functionID;
+        Sequence emptyClone = new Sequence(manager, functionID);
         for (int i = 0; i < this.shape.size(); i++) {
             emptyClone.shape.add(shape.get(i).createEmptyClone());
         }
@@ -208,7 +204,7 @@ public class Sequence {
     private double getFunctionDistance(int f1, int f2) {
         if (f1 == f2) 
             return 0.0;
-        else if (f1 == Constants.NULL_FUNCTION_ID) 
+        else if (f1 == Constants.NULL_FUNCTION_ID || f2 == Constants.NULL_FUNCTION_ID) 
             return Constants.NULL_FUNCTION_DISTANCE;
         else
             return 1.0;

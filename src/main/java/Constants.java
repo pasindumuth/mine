@@ -16,6 +16,7 @@ public class Constants {
     public static final int PATTERN_BASE = 10000;
     public static final int NULL_FUNCTION_ID = -1;
     public static final double NULL_FUNCTION_DISTANCE = 0.5;
+    public static final int BASE_FUNCTION_ID = 1000;
     
     public static final int PATTERN_SIMILARITY_THRESHOLD = 1;
 

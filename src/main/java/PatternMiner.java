@@ -15,7 +15,7 @@ public class PatternMiner {
     public PatternMiner(PatternManager manager) {
         this.manager = manager;
         this.sequenceForLevel = new ArrayList<>();
-        this.sequenceForLevel.add(new SequenceContainer(new Sequence(manager), 0)); // dummy sequence to handle base functions
+        this.sequenceForLevel.add(new SequenceContainer(new Sequence(manager, Constants.BASE_FUNCTION_ID), 0)); // dummy sequence to handle base functions
         this.stackLevel = 0;
     }
 
@@ -47,8 +47,7 @@ public class PatternMiner {
      */
     public void processEvent(int functionID, int dir, long time) {
         if (dir == Constants.FUNCTION_ENTER) {
-            Sequence newSequence = new Sequence(manager);
-            newSequence.setFunction(functionID);
+            Sequence newSequence = new Sequence(manager, functionID);
             // We want to record the start and end times of a particular Sequence instance, 
             // hence why we use SequenceContainers.
             SequenceContainer container = new SequenceContainer(newSequence, time);

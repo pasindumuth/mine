@@ -86,8 +86,7 @@ public class PatternManager {
      * of the pattern metric space.
      */
     public void initializeNullPattern() {
-        Sequence nullPatternSequence = new Sequence(this);
-        nullPatternSequence.setFunction(Constants.NULL_FUNCTION_ID);
+        Sequence nullPatternSequence = new Sequence(this, Constants.NULL_FUNCTION_ID);
         SequenceContainer container = new SequenceContainer(nullPatternSequence, 0);
         container.setEndTime(0);
         updatePatterns(container);
@@ -119,12 +118,10 @@ public class PatternManager {
         }
 
         // We have encountered a new pattern
-        int patternID = originalPatternShapes.size();
-        Sequence originalPatternShape = sequence.createEmptyClone();
-        originalPatternShapes.add(originalPatternShape);
-        updateDistances(originalPatternShape);
-
-        Pattern pattern = new Pattern(sequence, patternID);
+        int patternID = updateDistances(sequence.createEmptyClone());
+        Pattern pattern = new Pattern(sequence.createEmptyClone(), patternID);
+        pattern.getSequence().merge(sequence);
+        pattern.addInstance(container.getStartTime(), container.getEndTime());
         currentPatterns.add(pattern);
 
         return pattern;
@@ -136,7 +133,8 @@ public class PatternManager {
      * 
      * We use an edit distance based measure.
      */
-    private void updateDistances(Sequence newShape) {
+    private int updateDistances(Sequence newShape) {
+        originalPatternShapes.add(newShape);
         ArrayList<Double> newDistances = new ArrayList<>();
         for (int i = 0; i < patternDistances.size(); i++) {
             double distance = newShape.getDistance(originalPatternShapes.get(i));
@@ -146,13 +144,82 @@ public class PatternManager {
 
         newDistances.add(0.0);
         patternDistances.add(newDistances);
+        return originalPatternShapes.size() - 1; // The current index of the newly added shape.
+    }
+
+    public void dumpPatternManager(BufferedWriter writer) throws IOException {
+        dumpPatternManager(writer, true);
+    }
+
+    /**
+     * Writes a dump of the pattern shapes, original shapes, and distance map kept track
+     * by the pattern manager.
+     */
+    public void dumpPatternManager(BufferedWriter writer, boolean excludeSingeFunctions) throws IOException {
+        Map<Integer, Integer> originalSingleFunctions = new HashMap<>();
+        for (int i = 0; i < originalPatternShapes.size(); i++) {
+            Sequence sequence = originalPatternShapes.get(i);
+            if (sequence.isSingleFunction()) {
+                originalSingleFunctions.put(i, sequence.getFunction());
+            }
+        }
+        
+        // We print the distances for nonSingleFunctions of the original pattern shapes
+        StringBuilder patternIDSb = new StringBuilder();
+        patternIDSb.append("\t\t\t");
+        for (int i = 0; i < originalPatternShapes.size(); i++) {
+            if (excludeSingeFunctions && originalSingleFunctions.containsKey(i)) continue;
+            patternIDSb.append(String.valueOf(i + Constants.PATTERN_BASE) + ":\t\t");
+        }
+        writer.write(patternIDSb.toString() + "\n");
+
+        for (int i = 0; i < patternDistances.size(); i++) {
+            if (excludeSingeFunctions && originalSingleFunctions.containsKey(i)) continue;
+            ArrayList<Double> distanceRow = patternDistances.get(i);
+            StringBuilder distanceRowSb = new StringBuilder();
+            distanceRowSb.append(String.valueOf(i + Constants.PATTERN_BASE) + ":\t\t");
+            for (int j = 0; j < distanceRow.size(); j++) {
+                if (excludeSingeFunctions && originalSingleFunctions.containsKey(j)) continue;
+                distanceRowSb.append(String.format("%.2f", distanceRow.get(j)) + "\t\t");
+            }
+            writer.write(distanceRowSb.toString() + "\n");
+        }
+
+        // Print original pattern shapes
+        writer.write("ORIGINAL SHAPES\n");
+        for (int i = 0; i < originalPatternShapes.size(); i++) {
+            Sequence sequence = originalPatternShapes.get(i);
+            if (excludeSingeFunctions && sequence.isSingleFunction()) continue;
+            writer.write("#############\n");
+            writer.write(String.valueOf(i + Constants.PATTERN_BASE) + ":\n");
+            writer.write(sequence.toString(originalSingleFunctions) + "\n");
+        }
+
+        // Print current pattern shapes. These can be extensions of the original after new 
+        // instances of a given original pattern shape are found.
+        writer.write("CURRENT PATTERNS\n");
+        Map<Integer, Integer> patternSingleFunctions = new HashMap<>();
+        for (int i = 0; i < currentPatterns.size(); i++) {
+            Sequence sequence = currentPatterns.get(i).getSequence();
+            if (sequence.isSingleFunction()) {
+                patternSingleFunctions.put(i, sequence.getFunction());
+            }
+        }
+        
+        for (int i = 0; i < currentPatterns.size(); i++) {
+            Sequence sequence = currentPatterns.get(i).getSequence();
+            if (excludeSingeFunctions && sequence.isSingleFunction()) continue;
+            writer.write("#############\n");
+            writer.write(String.valueOf(i + Constants.PATTERN_BASE) + ":\n");
+            writer.write(sequence.toString(patternSingleFunctions) + "\n");
+        }
     }
 
     /**
      * Writes the current patterns to a the writer provided, and resets the current
      * patterns.
      */
-    public void flushPatterns(BufferedWriter writer) throws IOException {
+    public void writePatterns(BufferedWriter writer) throws IOException {
         Map<Integer, Integer> singleFunctions = new HashMap<>();
         for (Pattern pattern : currentPatterns) {
             Sequence sequence = pattern.getSequence();
@@ -164,6 +231,8 @@ public class PatternManager {
         for (Pattern pattern : currentPatterns) {
             Sequence sequence = pattern.getSequence();
             if (sequence.isSingleFunction()) continue;
+            // Since the pattern manager contains pattern shapes from previous threads, the patterns
+            // need to have any instances in this thread.
             if (pattern.getStartTimes().size() == 0) continue;
             List<Long> startTimes = pattern.getStartTimes();
             List<Long> durations = pattern.getDurations();
@@ -179,7 +248,11 @@ public class PatternManager {
                 writer.write(String.valueOf(durations.get(i)));
                 writer.write("\n");
             }
+        }
+    }
 
+    public void resetPatterns() {
+        for (Pattern pattern : currentPatterns) {
             pattern.reset();
         }
     }

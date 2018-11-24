@@ -2,9 +2,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.junit.After;
@@ -17,6 +19,8 @@ public class SequenceTest {
 
     @Before
     public void setup() throws IOException {
+        // Write System.out.println messages to a file for easy debugging
+        System.setOut(new PrintStream(new File(Constants.TEST_DATA_DIR + "debug"))); 
         writer = new BufferedWriter(new FileWriter(Constants.TEST_DATA_DIR + "output"));
     }
 
@@ -42,7 +46,7 @@ public class SequenceTest {
 
         // Assert output
         ArrayList<Sequence> nonSingleFunctions = getSingleFunctionsFilteredOut(manager.getShapes());
-        manager.flushPatterns(writer);
+        manager.dumpPatternManager(writer, false);
         assertEquals(nonSingleFunctions.size(), 1);
     }
 

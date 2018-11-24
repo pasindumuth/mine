@@ -22,7 +22,13 @@ public class Main {
             BufferedWriter writer = new BufferedWriter(
                 new FileWriter(Constants.PATTERN_DIR + "thread." + String.valueOf(i) + ".patterns"));
                 
-            manager.flushPatterns(writer);
+            manager.writePatterns(writer);
+            manager.resetPatterns();
+
+            BufferedWriter managerWriter = new BufferedWriter(
+                new FileWriter(Constants.PATTERN_DIR + "thread." + String.valueOf(i) + ".managerDump"));
+
+            manager.dumpPatternManager(managerWriter, false);
             writer.close();
         }
     }
