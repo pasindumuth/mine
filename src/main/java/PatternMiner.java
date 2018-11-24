@@ -3,8 +3,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class PatternMiner {
-    private PatternManager manager;
 
+    private PatternManager manager;
     private ArrayList<SequenceContainer> sequenceForLevel;
     private int stackLevel;
 
@@ -15,7 +15,7 @@ public class PatternMiner {
     public PatternMiner(PatternManager manager) {
         this.manager = manager;
         this.sequenceForLevel = new ArrayList<>();
-        this.sequenceForLevel.add(new SequenceContainer(new Sequence(manager, Constants.BASE_FUNCTION_ID), 0)); // dummy sequence to handle base functions
+        this.sequenceForLevel.add(new SequenceContainer(new Sequence(manager.getPatternDistances(), Constants.BASE_FUNCTION_ID), 0)); // dummy sequence to handle base functions
         this.stackLevel = 0;
     }
 
@@ -47,7 +47,7 @@ public class PatternMiner {
      */
     public void processEvent(int functionID, int dir, long time) {
         if (dir == Constants.FUNCTION_ENTER) {
-            Sequence newSequence = new Sequence(manager, functionID);
+            Sequence newSequence = new Sequence(manager.getPatternDistances(), functionID);
             // We want to record the start and end times of a particular Sequence instance, 
             // hence why we use SequenceContainers.
             SequenceContainer container = new SequenceContainer(newSequence, time);

@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Sequence {
@@ -10,15 +11,13 @@ public class Sequence {
      * pattern IDs occurred in this subtrace. `count` keeps count of the number
      * of times a pattern in `shape` get's compressed.
      */
-    
-    private PatternManager manager;
+    private PatternManager.PatternDistances patternDistances;
     private int functionID;
-    private ArrayList<SequenceElement> shape;
+    private ArrayList<SequenceElement> shape = new ArrayList<>();
 
-    public Sequence(PatternManager manager, int functionID) {
-        this.manager = manager;
+    public Sequence(PatternManager.PatternDistances patternDistances, int functionID) {
+        this.patternDistances = patternDistances;
         this.functionID = functionID;
-        this.shape = new ArrayList<>();
     }
 
     public int getFunction() {
@@ -26,7 +25,7 @@ public class Sequence {
     }
 
     public void addPatternID(Integer patternID) {
-        shape.add(new SequenceElement(manager, patternID));
+        shape.add(new SequenceElement(patternDistances, patternID));
     }
 
     /**
@@ -132,7 +131,7 @@ public class Sequence {
 
         // Compute the edit distance between the shapes
         // TO-DO: Doc how null pattern, and null sequence element, form metric spaces just the same.
-        SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement(manager);
+        SequenceElement nullSequenceElement = SequenceElement.createNullSequenceElement(patternDistances);
 
         ArrayList<SequenceElement> s1 = this.shape;
         ArrayList<SequenceElement> s2 = otherSequence.shape;
@@ -165,7 +164,7 @@ public class Sequence {
      * Creates a clone with all counts set to 0.
      */
     public Sequence createEmptyClone() {
-        Sequence emptyClone = new Sequence(manager, functionID);
+        Sequence emptyClone = new Sequence(patternDistances, functionID);
         for (int i = 0; i < this.shape.size(); i++) {
             emptyClone.shape.add(shape.get(i).createEmptyClone());
         }

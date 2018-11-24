@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +42,7 @@ public class SequenceTest {
     @Test
     public void test1() throws IOException {
         // Mine trace for patterns.
-        PatternManager manager = new PatternManager();
+        PatternManager manager = new PatternManager(new PatternManager.PatternDistances(new ArrayList<>()));
         mine("test1", manager);
 
         // Assert output
@@ -62,7 +63,7 @@ public class SequenceTest {
         reader.close();
     }
 
-    ArrayList<Sequence> getSingleFunctionsFilteredOut(ArrayList<Sequence> sequences) {
+    ArrayList<Sequence> getSingleFunctionsFilteredOut(List<Sequence> sequences) {
         ArrayList<Sequence> filtered = new ArrayList<>();
         for (Sequence sequence : sequences) {
             if (!sequence.isSingleFunction()) {

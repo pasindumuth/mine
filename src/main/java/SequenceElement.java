@@ -16,23 +16,21 @@ public class SequenceElement {
     /**
      * Maps patternID to count
      */
-    private Map<Integer, Integer> patternIDCounts;
-    private PatternManager manager;    
+    private Map<Integer, Integer> patternIDCounts = new HashMap<>();
+    private PatternManager.PatternDistances patternDistances;
 
-    public SequenceElement(PatternManager manager, Integer patternID) {
-        this.manager = manager;
-        patternIDCounts = new HashMap<>();
+    public SequenceElement(PatternManager.PatternDistances patternDistances, Integer patternID) {
+        this.patternDistances = patternDistances;
         this.patternIDCounts.put(patternID, 1);
     }
 
-    private SequenceElement(PatternManager manager) {
-        this.manager = manager;
-        patternIDCounts = new HashMap<>();
-    };
+    public SequenceElement(PatternManager.PatternDistances patternDistances) {
+        this.patternDistances = patternDistances;
+    }
 
     /** Importantly, although we designate this SequenceElement as 'null', it is part of the metric space just the same. */
-    public static SequenceElement createNullSequenceElement(PatternManager manager) {
-        return new SequenceElement(manager, PatternManager.NULL_PATTERN_ID);
+    public static SequenceElement createNullSequenceElement(PatternManager.PatternDistances patternDistances) {
+        return new SequenceElement(patternDistances, PatternManager.NULL_PATTERN_ID);
     }
 
     /**
@@ -60,7 +58,7 @@ public class SequenceElement {
     public boolean canMerge(SequenceElement otherElement) {
         for (Integer thisPatternID: this.patternIDCounts.keySet()) {
             for (Integer otherPatternID: otherElement.patternIDCounts.keySet()) {
-                if (manager.getDistance(thisPatternID, otherPatternID) 
+                if (patternDistances.getDistance(thisPatternID, otherPatternID) 
                     > Constants.PATTERN_SIMILARITY_THRESHOLD) {
                     return false;
                 }
@@ -90,7 +88,7 @@ public class SequenceElement {
         for (int thisPatternID : this.patternIDCounts.keySet()) {
             double distanceToOther = Integer.MAX_VALUE;
             for (int otherPatternID : otherElement.patternIDCounts.keySet()) {
-                double curDistance = manager.getDistance(thisPatternID, otherPatternID);
+                double curDistance = patternDistances.getDistance(thisPatternID, otherPatternID);
                 if (curDistance < distanceToOther) distanceToOther = curDistance;
             }
             if (distanceToOther > leftDistance) leftDistance = distanceToOther;
@@ -99,7 +97,7 @@ public class SequenceElement {
         for (int otherPatternID : otherElement.patternIDCounts.keySet()) {
             double distanceToThis = Integer.MAX_VALUE;
             for (int thisPatternID : this.patternIDCounts.keySet()) {
-                double curDistance = manager.getDistance(otherPatternID, thisPatternID);
+                double curDistance = patternDistances.getDistance(otherPatternID, thisPatternID);
                 if (curDistance < distanceToThis) distanceToThis = curDistance;
             }
             if (distanceToThis > rightDistance) rightDistance = distanceToThis;
@@ -112,7 +110,7 @@ public class SequenceElement {
      * Creates clone with all counts set to 0.
      */
     public SequenceElement createEmptyClone() {
-        SequenceElement clone = new SequenceElement(manager);
+        SequenceElement clone = new SequenceElement(patternDistances);
         for (Integer patternID : patternIDCounts.keySet()) {
             clone.patternIDCounts.put(patternID, 0);
         }

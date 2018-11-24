@@ -44,7 +44,23 @@ public class PatternManager {
      * 2. patternDistances[i][i] = 0
      * 3. patternDistances[i][j] <= patternDistances[i][k] + patternDistances[k][j]
      */
-    private ArrayList<ArrayList<Double>> patternDistances = new ArrayList<>();
+    public static class PatternDistances {
+        private List<List<Double>> patternDistances = new ArrayList<>();
+
+        public PatternDistances(List<List<Double>> patternDistances) {
+            this.patternDistances = patternDistances;
+        }
+        
+        public double getDistance(int p1, int p2) {
+            return patternDistances.get(p1).get(p2);
+        }
+
+        private List<List<Double>> get() {
+            return patternDistances;
+        }
+    }
+
+    private PatternDistances patternDistances;
 
     /**
      * TO-DO: don't call this null. Null has a history of breaking specification of what it represents.
@@ -57,14 +73,15 @@ public class PatternManager {
      * Maps patternIDs to shape of the original instance of the pattern. {@link #patternDistances}
      * is calculated using the original shapes.
      */
-    private ArrayList<Sequence> originalPatternShapes = new ArrayList<>();
+    private List<Sequence> originalPatternShapes = new ArrayList<>();
 
     /**
      * Holds onto patterns as they evolve.
      */
-    private ArrayList<Pattern> currentPatterns = new ArrayList<>();
+    private List<Pattern> currentPatterns = new ArrayList<>();
 
-    public PatternManager() {
+    public PatternManager(PatternDistances patternDistances) {
+        this.patternDistances = patternDistances;
         initializeNullPattern();
     }
 
@@ -77,8 +94,12 @@ public class PatternManager {
     }
 
 
-    public ArrayList<Sequence> getShapes() {
+    public List<Sequence> getShapes() {
         return originalPatternShapes;
+    }
+
+    public PatternDistances getPatternDistances() {
+        return patternDistances;
     }
 
     /**
@@ -86,19 +107,10 @@ public class PatternManager {
      * of the pattern metric space.
      */
     public void initializeNullPattern() {
-        Sequence nullPatternSequence = new Sequence(this, Constants.NULL_FUNCTION_ID);
+        Sequence nullPatternSequence = new Sequence(patternDistances, Constants.NULL_FUNCTION_ID);
         SequenceContainer container = new SequenceContainer(nullPatternSequence, 0);
         container.setEndTime(0);
         updatePatterns(container);
-    }
-
-    /**
-     * @param p1 first patternID
-     * @param p2 second patternID
-     * @return distance between the patternIDs
-     */
-    public double getDistance(int p1, int p2) {
-        return patternDistances.get(p1).get(p2);
     }
 
     /**
@@ -136,14 +148,14 @@ public class PatternManager {
     private int updateDistances(Sequence newShape) {
         originalPatternShapes.add(newShape);
         ArrayList<Double> newDistances = new ArrayList<>();
-        for (int i = 0; i < patternDistances.size(); i++) {
+        for (int i = 0; i < patternDistances.get().size(); i++) {
             double distance = newShape.getDistance(originalPatternShapes.get(i));
             newDistances.add(distance);
-            patternDistances.get(i).add(distance);
+            patternDistances.get().get(i).add(distance);
         }
 
         newDistances.add(0.0);
-        patternDistances.add(newDistances);
+        patternDistances.get().add(newDistances);
         return originalPatternShapes.size() - 1; // The current index of the newly added shape.
     }
 
@@ -173,9 +185,9 @@ public class PatternManager {
         }
         writer.write(patternIDSb.toString() + "\n");
 
-        for (int i = 0; i < patternDistances.size(); i++) {
+        for (int i = 0; i < patternDistances.get().size(); i++) {
             if (excludeSingeFunctions && originalSingleFunctions.containsKey(i)) continue;
-            ArrayList<Double> distanceRow = patternDistances.get(i);
+            List<Double> distanceRow = patternDistances.get().get(i);
             StringBuilder distanceRowSb = new StringBuilder();
             distanceRowSb.append(String.valueOf(i + Constants.PATTERN_BASE) + ":\t\t");
             for (int j = 0; j < distanceRow.size(); j++) {

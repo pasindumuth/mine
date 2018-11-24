@@ -3,11 +3,12 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        PatternManager manager = new PatternManager();
+        PatternManager manager = new PatternManager(new PatternManager.PatternDistances(new ArrayList<>()));
 
         for (int i = 1;; i++) {
             BufferedReader reader = new BufferedReader(
