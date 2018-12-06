@@ -24,6 +24,14 @@ public class SequenceElement {
         this.patternIDCounts.put(patternID, 1);
     }
 
+    /** The patternIDCounts is an array of key-value pairs, where the first is pattern ID, and the second is the count. */
+    public SequenceElement(PatternManager.PatternDistances patternDistances, int[][] patternIDCounts) {
+        this.patternDistances = patternDistances;
+        for (int[] pair : patternIDCounts) {
+            this.patternIDCounts.put(pair[0], pair[1]);
+        }
+    }
+
     public SequenceElement(PatternManager.PatternDistances patternDistances) {
         this.patternDistances = patternDistances;
     }

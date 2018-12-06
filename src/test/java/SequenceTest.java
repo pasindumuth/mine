@@ -1,4 +1,5 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,15 +30,10 @@ public class SequenceTest {
     public void cleanup() throws IOException {
         writer.close();
     }
-    /**
-     * Test Ideas: 
-     * - We largly want to test what sequences are considered the same in our mining algorithm,
-     * although it there might still be value in testing the exact form (which can vary).
-     */
     
      /**
       * When two simple patterns have the same base function but have different level 1 function calls,
-      * Then define the two patterns as the same.
+      * then define the two patterns as the same.
       */
     @Test
     public void test1() throws IOException {
@@ -49,6 +45,86 @@ public class SequenceTest {
         ArrayList<Sequence> nonSingleFunctions = getSingleFunctionsFilteredOut(manager.getShapes());
         manager.dumpPatternManager(writer, false);
         assertEquals(nonSingleFunctions.size(), 1);
+    }
+
+    @Test
+    public void distanceTest() {
+        // This must be a valid metric
+        double[][] distances = {
+            {0.0, 0.5, 1.0},
+            {0.5, 0.0, 1.0},
+            {1.0, 1.0, 0.0}
+        };
+        assertTrue(verifyMetric(distances));
+        PatternManager.PatternDistances patternDistances = createDistances(distances);
+
+        SequenceElement e1 = new SequenceElement(patternDistances, new int[][] {
+            {1, 1}
+        });
+
+        SequenceElement e2 = new SequenceElement(patternDistances, new int[][] {
+            {2, 1}
+        });
+
+        SequenceElement e3 = new SequenceElement(patternDistances, new int[][] {
+            {2, 1}, {1, 1}
+        });
+
+        SequenceElement eNull = SequenceElement.createNullSequenceElement(patternDistances);
+        assertEquals(e1.getDistance(eNull), 0.5);
+        assertEquals(e1.getDistance(e1), 0.0);
+        assertEquals(e2.getDistance(e1), 1.0);
+        assertEquals(e3.getDistance(e1), 1.0);
+        assertEquals(e3.getDistance(e3), 0.0);
+    }
+
+    /** When we make distance maps for the purpose of testing, this makes sure that it is actually a metric. */
+    boolean verifyMetric(double[][] distances) {
+        // Make sure this is square
+        int m = distances.length;
+        for (int i = 0; i < m; i++) {
+            if (distances[i].length != m) return false;
+        }
+
+        // Verify only the diagonal is 0.0
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < m; j++) {
+                if (i == j && distances[i][j] != 0.0) return false;
+                if (i != j && distances[i][j] == 0.0) return false; 
+            }
+        }
+
+        // This is symmetric, and that non diagonal elements are non 0.0
+        for (int i = 0; i < m; i++) {
+            for (int j = i + 1; j < m; j++) {
+                if (distances[i][j] == 0.0) return false;
+                if (distances[i][j] != distances[j][i]) return false;
+            }
+        }
+
+        // Verify the distance map is transitive
+        for (int i = 0; i < m; i++) {
+            for (int j = i + 1; j < m; j++) {
+                for (int k = 0; k < m; k++) {
+                    if (distances[i][j] > distances[i][k] + distances[k][j]) return false;
+                }
+            }
+        }
+
+        // The distance map is a metric
+        return true;
+    }
+
+    PatternManager.PatternDistances createDistances(double[][] distances) {
+        List<List<Double>> distanceLists = new ArrayList<>();
+        for (int i = 0; i < distances.length; i++) {
+            List<Double> distanceList = new ArrayList<>();
+            for (int j = 0; j < distances[i].length; j++) {
+                distanceList.add(distances[i][j]);
+            }
+            distanceLists.add(distanceList);
+        }
+        return new PatternManager.PatternDistances(distanceLists);
     }
 
     /**
