@@ -11,23 +11,23 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SequenceTest {
 
-    BufferedWriter writer;
+    private static BufferedWriter writer;
 
-    @Before
-    public void setup() throws IOException {
+    @BeforeClass
+    public static void setup() throws IOException {
         // Write System.out.println messages to a file for easy debugging
         System.setOut(new PrintStream(new File(Constants.TEST_DATA_DIR + "debug"))); 
         writer = new BufferedWriter(new FileWriter(Constants.TEST_DATA_DIR + "output"));
     }
 
-    @After
-    public void cleanup() throws IOException {
+    @AfterClass
+    public static void cleanup() throws IOException {
         writer.close();
     }
     
@@ -48,18 +48,11 @@ public class SequenceTest {
     }
 
     @Test
-    public void distanceTest() {
-        // This must be a valid metric
-        double[][] distances = {
-            {0.0, 0.5, 1.0},
-            {0.5, 0.0, 1.0},
-            {1.0, 1.0, 0.0}
-        };
-        assertTrue(verifyMetric(distances));
-        PatternManager.PatternDistances patternDistances = createDistances(distances);
-
+    public void testSequenceElementDistance() {
+        PatternManager.PatternDistances patternDistances = getBasicDistances();
+        
         SequenceElement e1 = new SequenceElement(patternDistances, new int[][] {
-            {1, 1}
+            {1, 1}  
         });
 
         SequenceElement e2 = new SequenceElement(patternDistances, new int[][] {
@@ -78,8 +71,44 @@ public class SequenceTest {
         assertEquals(e3.getDistance(e3), 0.0);
     }
 
+    @Test
+    public void testSingleFunctionSequenceDistance() {
+        PatternManager.PatternDistances patternDistances = getBasicDistances();
+
+        // Sequences with just the base pattern.
+        Sequence s1 = new Sequence(patternDistances, Constants.NULL_FUNCTION_ID);
+        Sequence s2 = new Sequence(patternDistances, 0);
+        Sequence s3 = new Sequence(patternDistances, 1);
+        assertEquals(s1.getDistance(s2), 0.5);
+        assertEquals(s2.getDistance(s2), 0.0);
+        assertEquals(s2.getDistance(s3), 1.0);
+    }
+
+    @Test
+    public void testBasicSequenceDistance() {
+        PatternManager.PatternDistances patternDistances = getBasicDistances();
+
+        Sequence s1 = new Sequence(patternDistances, 0);
+        s1.addPatternID(1);
+        Sequence s2 = new Sequence(patternDistances, 0);
+        s2.addPatternID(1);
+        assertEquals(s1.getDistance(s2), 0.0);
+        Sequence s3 = new Sequence(patternDistances, 0);
+        assertEquals(s1.getDistance(s3), 0.5);
+    }
+
+    private PatternManager.PatternDistances getBasicDistances() {
+        double[][] distances = {
+            {0.0, 0.5, 1.0},
+            {0.5, 0.0, 1.0},
+            {1.0, 1.0, 0.0}
+        };
+        assertTrue(verifyMetric(distances));
+        return createDistances(distances);
+    }
+
     /** When we make distance maps for the purpose of testing, this makes sure that it is actually a metric. */
-    boolean verifyMetric(double[][] distances) {
+    private boolean verifyMetric(double[][] distances) {
         // Make sure this is square
         int m = distances.length;
         for (int i = 0; i < m; i++) {
@@ -115,7 +144,7 @@ public class SequenceTest {
         return true;
     }
 
-    PatternManager.PatternDistances createDistances(double[][] distances) {
+    private PatternManager.PatternDistances createDistances(double[][] distances) {
         List<List<Double>> distanceLists = new ArrayList<>();
         for (int i = 0; i < distances.length; i++) {
             List<Double> distanceList = new ArrayList<>();
@@ -132,14 +161,14 @@ public class SequenceTest {
      * @param testFile test file with trace data in the form of a standard trace
      * @param manager manager we collected the mined data into.
      */
-    void mine(String testFile, PatternManager manager) throws IOException {
+    private void mine(String testFile, PatternManager manager) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(Constants.TEST_DATA_DIR + testFile));
         PatternMiner miner = new PatternMiner(manager);
         miner.mineThread(reader);
         reader.close();
     }
 
-    ArrayList<Sequence> getSingleFunctionsFilteredOut(List<Sequence> sequences) {
+    private ArrayList<Sequence> getSingleFunctionsFilteredOut(List<Sequence> sequences) {
         ArrayList<Sequence> filtered = new ArrayList<>();
         for (Sequence sequence : sequences) {
             if (!sequence.isSingleFunction()) {
