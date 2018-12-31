@@ -11,10 +11,10 @@ import java.util.Map;
 
 public class PatternManager2 {
 
-    List<SubtraceRepresentation> patternRepresentations = new ArrayList<>();
     DistanceMap distanceMap;
-    List<Integer> counts = new ArrayList<>();
     List<Integer> representationDepth = new ArrayList<>();
+    List<SubtraceRepresentation> patternRepresentations = new ArrayList<>();
+    List<Pattern2> patternInstances = new ArrayList<>();
 
     public PatternManager2(DistanceMap distanceMap) {
         this.distanceMap = distanceMap;
@@ -29,8 +29,8 @@ public class PatternManager2 {
         newDistances.add(0.0);
         distanceMap.get().add(newDistances);
 
-        // Counts
-        counts.add(0);
+        // Update instances
+        patternInstances.add(new Pattern2(Constants.NULL_PATTERN_ID));
 
         // Assign depth of null patterns to be 0.
         representationDepth.add(0);
@@ -44,13 +44,14 @@ public class PatternManager2 {
         return distanceMap;
     }
 
-    public int updatePatterns(SubtraceRepresentation newRepresentation) {
+    public int updatePatterns(RepresentationContainer container) {
+        SubtraceRepresentation newRepresentation = container.getRepresentation();
         for (int patternId = 0; patternId < patternRepresentations.size(); patternId++) {
             SubtraceRepresentation representation = patternRepresentations.get(patternId);
             double acceptanceDistance = getAcceptanceDistance(patternId);
             double distance = newRepresentation.getDistance(representation);
             if (distance < acceptanceDistance) {
-                counts.set(patternId, counts.get(patternId) + 1);
+                patternInstances.get(patternId).addInstance(container.getStartTime(), container.getEndTime());
                 return patternId;
             }
         }
@@ -74,12 +75,15 @@ public class PatternManager2 {
         }
         representationDepth.add(maxDepth + 1);
 
-        // Update counts
-        counts.add(1);
-
         // Update representation list
         int newPatternId = patternRepresentations.size();
         patternRepresentations.add(newRepresentation);
+
+        // Update instances
+        Pattern2 pattern = new Pattern2(newPatternId);
+        pattern.addInstance(container.getStartTime(), container.getEndTime());
+        patternInstances.add(pattern);
+
         return newPatternId;
     }
 
@@ -95,18 +99,27 @@ public class PatternManager2 {
             if (singleFunctionPatterns.containsKey(patternId)) {
                 continue;
             }
+
+            Pattern2 pattern = patternInstances.get(patternId);
+            List<Long> startTimes = pattern.getStartTimes();
+            List<Long> durations = pattern.getDurations();
+            // Since the pattern manager contains pattern shapes from previous threads, the patterns
+            // need to have any instances in this thread.
+            if (startTimes.size() == 0) {
+                continue;
+            }
+
             writer.write("#############\n");
             writer.write(String.valueOf(patternId + Constants.PATTERN_BASE) + ":\n");
             writer.write(patternRepresentations.get(patternId).toString(singleFunctionPatterns) + "\n");
-            writer.write(String.valueOf(counts.get(patternId)) + " OCCURRENCES.\n");
-            writer.write("\n");
-        }
 
-//        for (int depth : representationDepth) {
-//            writer.write(String.valueOf(depth) + " ");
-//        }
-//
-//        writer.write("\n");
-//        writer.write(distanceMap.toString());
+            writer.write(String.valueOf(startTimes.size()) + " OCCURRENCES.\n");
+            for (int i = 0; i < startTimes.size(); i++) {
+                writer.write(String.valueOf(startTimes.get(i)));
+                writer.write(" : ");
+                writer.write(String.valueOf(durations.get(i)));
+                writer.write("\n");
+            }
+        }
     }
 }

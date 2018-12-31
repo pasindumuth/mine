@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class PatternMiner2 {
 
     private PatternManager2 manager;
-    private ArrayList<SubtraceRepresentation> representationForLevel = new ArrayList<>();
+    private ArrayList<RepresentationContainer> representationForLevel = new ArrayList<>();
     private int stackLevel = 0;
 
     /**
@@ -18,7 +18,7 @@ public class PatternMiner2 {
      */
     public PatternMiner2(PatternManager2 manager) {
         this.manager = manager;
-        representationForLevel.add(new SubtraceRepresentation(manager.getDistanceMap(), Constants.BASE_FUNCTION_ID));
+        representationForLevel.add(new RepresentationContainer(new SubtraceRepresentation(manager.getDistanceMap(), Constants.BASE_FUNCTION_ID), 0)); // dummy sequence to handle base functions
     }
 
     /**
@@ -30,7 +30,7 @@ public class PatternMiner2 {
         int count = 0;
         while (line != null) {
             if (count % 1000000 == 0) System.out.println(count);
-            if (count == 6000000) break;
+            if (count == 1000000) break;
             count++;
 
             String[] record = line.split("\t");
@@ -51,17 +51,19 @@ public class PatternMiner2 {
     public void processEvent(int functionID, int dir, long time) {
         if (dir == Constants.FUNCTION_ENTER) {
             SubtraceRepresentation newRepresentation = new SubtraceRepresentation(manager.getDistanceMap(), functionID);
+            RepresentationContainer container = new RepresentationContainer(newRepresentation, time);
             stackLevel++;
-            if (stackLevel < representationForLevel.size()) representationForLevel.set(stackLevel, newRepresentation);
-            else representationForLevel.add(newRepresentation);
+            if (stackLevel < representationForLevel.size()) representationForLevel.set(stackLevel, container);
+            else representationForLevel.add(container);
         } else {
             // The highest sequence is finished. Update the set of patterns.
-            SubtraceRepresentation finishedRepresentation = representationForLevel.get(stackLevel);
-            int newPatternId = manager.updatePatterns(finishedRepresentation);
+            RepresentationContainer container = representationForLevel.get(stackLevel);
+            container.setEndTime(time);
+            int newPatternId = manager.updatePatterns(container);
             stackLevel--;
 
             // Update representation below with the new pattern instance.
-            SubtraceRepresentation belowRepresentation = representationForLevel.get(stackLevel);
+            SubtraceRepresentation belowRepresentation = representationForLevel.get(stackLevel).getRepresentation();
             belowRepresentation.addPatternId(newPatternId);
         }
     }
