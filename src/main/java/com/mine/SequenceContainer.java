@@ -1,3 +1,5 @@
+package com.mine;
+
 public class SequenceContainer {
 
     private Sequence sequence;

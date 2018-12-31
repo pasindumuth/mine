@@ -1,3 +1,5 @@
+package com.mine;
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -205,6 +207,6 @@ public class Sequence {
         else if (f1 == Constants.NULL_FUNCTION_ID || f2 == Constants.NULL_FUNCTION_ID) 
             return Constants.NULL_FUNCTION_DISTANCE;
         else
-            return 1.0;
+            return Constants.FUNCTION_DISTANCE;
     }
 }
