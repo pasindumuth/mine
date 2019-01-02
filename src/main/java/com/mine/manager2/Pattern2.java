@@ -38,12 +38,16 @@ public class Pattern2 {
         durations.add(container.getEndTime() - container.getStartTime());
     }
 
-    public int getPatternID() {
+    public int getPatternId() {
         return patternId;
     }
 
     public int getDepth() {
         return depth;
+    }
+
+    public TreeMap<Integer, Integer> getPatternIdCounts() {
+        return patternIdCounts;
     }
 
     public List<Long> getStartTimes() {

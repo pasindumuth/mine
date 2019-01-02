@@ -107,15 +107,11 @@ public class PatternManager2 {
         // Since the pattern manager contains pattern shapes from previous threads, the patterns
         // need to have any instances in this thread.
         List<Pattern2> filteredPatternInstances = patternInstances.stream().filter(pattern ->
-                !(singleFunctionPatterns.containsKey(pattern.getPatternID()) || pattern.getStartTimes().isEmpty())
+                !(singleFunctionPatterns.containsKey(pattern.getPatternId()) || pattern.getStartTimes().isEmpty())
         ).collect(Collectors.toList());
 
-//        List<Pattern2> sortedPatternInstances = filteredPatternInstances.stream().sorted((p1, p2) ->
-//                p2.getStartTimes().size() - p1.getStartTimes().size()
-//        ).collect(Collectors.toList());
-
         for (Pattern2 pattern : filteredPatternInstances) {
-            int patternId = pattern.getPatternID();
+            int patternId = pattern.getPatternId();
             List<Long> startTimes = pattern.getStartTimes();
             List<Long> durations = pattern.getDurations();
 
@@ -140,7 +136,7 @@ public class PatternManager2 {
 
         for (Pattern2 pattern1 : filteredPatternInstances) {
             for (Pattern2 pattern2 : filteredPatternInstances) {
-                writer.write(String.valueOf(distanceMap.getDistance(pattern1.getPatternID(), pattern2.getPatternID())));
+                writer.write(String.valueOf(distanceMap.getDistance(pattern1.getPatternId(), pattern2.getPatternId())));
                 writer.write("\t");
             }
             writer.write("\n");
@@ -149,9 +145,29 @@ public class PatternManager2 {
 
     /**
      * Verifies:
-     * 1. All patterns of a given depth are disjoint.
+     * 1. Patterns have constituent patterns with strictly lower depth.
+     * 1. The pattern instances instances of the patterns for a given depth occur on disjoint time intervals.
+     * 2. All patterns occurences are accounted for wherever they occur (except the first pattern).
      */
     private void verifyInstances() {
+        System.out.println("Starting pattern verification.");
+        verifyLowerDepthReferencing();
+        verifyDisjointIntervals();
+        verifyPatternOccurenceCounts();
+        System.out.println("Pattern verification finished.");
+    }
+
+    private void verifyLowerDepthReferencing() {
+        for (Pattern2 pattern: patternInstances) {
+            for (int patternId : pattern.getPatternIdCounts().keySet()) {
+                if (!(patternRepresentations.get(patternId).getDepth() < pattern.getDepth())) {
+                    System.out.println("Faiure: depth of constituent pattern is not strictly less that current pattern.");
+                }
+            }
+        }
+    }
+
+    private void verifyDisjointIntervals() {
         int maxDepth = 0;
         for (Pattern2 pattern : patternInstances) {
             maxDepth = Math.max(maxDepth, pattern.getDepth());
@@ -189,12 +205,33 @@ public class PatternManager2 {
             });
             for (int i = 0; i < intervals.size() - 1; i++) {
                 if (!(intervals.get(i + 1).startTime >= intervals.get(i).startTime + intervals.get(i).duration)) {
-                    System.out.println("Failure");
+                    System.out.println("Failure: intervals of two patterns of the same depth or overlapping.");
                 }
             }
         }
+    }
 
-        System.out.println("Patterns verified: all good.");
+    public void verifyPatternOccurenceCounts() {
+        List<Integer> patternOccurenceCount = new ArrayList<>();
+        for (Pattern2 pattern: patternInstances) {
+            patternOccurenceCount.add(pattern.getStartTimes().size());
+        }
+        for (Pattern2 pattern : patternInstances) {
+            for (Map.Entry<Integer, Integer> patternIdCount : pattern.getPatternIdCounts().entrySet()) {
+                int patternId = patternIdCount.getKey();
+                int currentCount = patternOccurenceCount.get(patternId);
+                patternOccurenceCount.set(patternId, currentCount - patternIdCount.getValue());
+            }
+        }
+        // Ignore the null pattern and the base pattern
+        for (int patternId = 1; patternId < patternOccurenceCount.size() - 1; patternId++) {
+            if (patternOccurenceCount.get(patternId) != 0) {
+                System.out.println("Failure: occurences of a non base pattern are not accounted for.");
+            }
+        }
+        if (patternOccurenceCount.get(patternOccurenceCount.size() - 1) != 1) {
+            System.out.println("Failure: base pattern has occurence count that is not 1.");
+        }
     }
 
     private static class Interval {
