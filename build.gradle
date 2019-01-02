@@ -11,7 +11,8 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.guava:guava:24.0-jre'
+    compile "com.google.guava:guava:24.0-jre"
+    compile "org.json:json:20180813"
     testCompile "org.junit.jupiter:junit-jupiter-api:5.1.0"
 	testCompile "junit:junit:4.12"
 }

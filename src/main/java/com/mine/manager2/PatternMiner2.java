@@ -30,7 +30,7 @@ public class PatternMiner2 {
         int count = 0;
         while (line != null) {
             if (count % 1000000 == 0) System.out.println(count);
-            if (count == 1000000) break;
+            if (count == 100000000) break;
             count++;
 
             String[] record = line.split("\t");

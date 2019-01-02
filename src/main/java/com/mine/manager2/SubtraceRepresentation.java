@@ -7,26 +7,40 @@ import java.util.*;
 public class SubtraceRepresentation {
 
     private final DistanceMap distanceMap;
-    private final Set<Integer> patternIds = new HashSet<>();
+    private final TreeMap<Integer, Integer> patternIds = new TreeMap<>();
     private final Integer baseFunction;
+    private int depth;
 
     public SubtraceRepresentation(
             DistanceMap distanceMap,
             Integer baseFunction) {
         this.distanceMap = distanceMap;
         this.baseFunction = baseFunction;
-        patternIds.add(Constants.NULL_PATTERN_ID);
+        addPatternId(Constants.NULL_PATTERN_ID);
     }
 
     public void addPatternId(Integer patternId) {
-        patternIds.add(patternId);
+        patternIds.putIfAbsent(patternId, 0);
+        patternIds.put(patternId, patternIds.get(patternId) + 1);
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     public int getBaseFunction() {
         return baseFunction;
     }
 
+    public int getDepth() {
+        return depth;
+    }
+
     public Set<Integer> getPatternIds() {
+        return patternIds.keySet();
+    }
+
+    public TreeMap<Integer, Integer> getPatternIdCounts() {
         return patternIds;
     }
 
@@ -47,18 +61,18 @@ public class SubtraceRepresentation {
         double leftDistance = 0;
         double rightDistance = 0;
 
-        for (int thisPatternID : this.patternIds) {
+        for (int thisPatternID : this.patternIds.keySet()) {
             double distanceToOther = Integer.MAX_VALUE;
-            for (int otherPatternID : other.patternIds) {
+            for (int otherPatternID : other.patternIds.keySet()) {
                 double curDistance = distanceMap.getDistance(thisPatternID, otherPatternID);
                 if (curDistance < distanceToOther) distanceToOther = curDistance;
             }
             if (distanceToOther > leftDistance) leftDistance = distanceToOther;
         }
 
-        for (int otherPatternID : other.patternIds) {
+        for (int otherPatternID : other.patternIds.keySet()) {
             double distanceToThis = Integer.MAX_VALUE;
-            for (int thisPatternID : this.patternIds) {
+            for (int thisPatternID : this.patternIds.keySet()) {
                 double curDistance = distanceMap.getDistance(otherPatternID, thisPatternID);
                 if (curDistance < distanceToThis) distanceToThis = curDistance;
             }
@@ -86,11 +100,20 @@ public class SubtraceRepresentation {
 
     public String toString(Map<Integer, Integer> singleFunctionPatterns) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{[");
+        sb.append("{");
+
+        // Add depth
+        sb.append(depth);
+        sb.append(", ");
+
+        // Add base function
+        sb.append("[");
         sb.append(baseFunction);
         sb.append("], ");
+
+        sb.append("[");
         List<String> patternIdStrings = new ArrayList<>(); // single function patterns will just use their base functions
-        for (int patternId : patternIds) {
+        for (int patternId : patternIds.keySet()) {
             if (singleFunctionPatterns.containsKey(patternId)) {
                 patternIdStrings.add(String.valueOf(singleFunctionPatterns.get(patternId)));
             } else {
@@ -99,6 +122,8 @@ public class SubtraceRepresentation {
         }
 
         sb.append(String.join(", ", patternIdStrings));
+        sb.append("]");
+
         sb.append("}");
         return sb.toString();
     }
