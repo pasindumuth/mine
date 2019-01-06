@@ -4,7 +4,11 @@ import com.mine.Constants;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class SubtraceRepresentation {
 
@@ -100,7 +104,7 @@ public class SubtraceRepresentation {
             return Constants.FUNCTION_DISTANCE;
     }
 
-    public String toString(Map<Integer, Integer> singleFunctionPatterns) {
+    public String prettyString(Map<Integer, Integer> singleFunctionPatterns) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
 
@@ -130,7 +134,7 @@ public class SubtraceRepresentation {
         return sb.toString();
     }
 
-    public JSONObject toJSONObject(Map<Integer, Integer> singleFunctionPatterns) {
+    public JSONObject serialize(Map<Integer, Integer> singleFunctionPatterns) {
         JSONArray patternIds = new JSONArray();
         for (int patternId : this.patternIds.keySet()) {
             if (patternId != Constants.NULL_PATTERN_ID) { // Don't bother adding the null pattern

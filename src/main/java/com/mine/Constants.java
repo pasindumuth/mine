@@ -8,7 +8,7 @@ public class Constants {
     public static final String PATTERN_DIR = DATA_DIR + "patterns/";
 
     // Shared
-    public static final int PATTERN_BASE = 10000; // Only used when dumping patterns.
+    public static final int PATTERN_BASE = 10000; // Used when serializing patterns
     public static final int NULL_PATTERN_ID = 0;
     public static final int NULL_FUNCTION_ID = -1;
     public static final double NULL_FUNCTION_DISTANCE = 0.5;

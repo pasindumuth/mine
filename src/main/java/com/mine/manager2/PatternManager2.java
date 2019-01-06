@@ -1,10 +1,15 @@
 package com.mine.manager2;
 
 import com.mine.Constants;
+import org.json.JSONArray;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PatternManager2 {
@@ -91,7 +96,7 @@ public class PatternManager2 {
         }
     }
 
-    public void dumpPatterns(BufferedWriter writer) throws IOException {
+    public void dumpPatterns(BufferedWriter writer, Long absoluteStartTime) throws IOException {
         verifyInstances();
         Map<Integer, Integer> singleFunctionPatterns = new HashMap<>(); // maps patternIds of single function patterns to their base functions.
         for (int patternId = 0; patternId < patternRepresentations.size(); patternId++) {
@@ -110,23 +115,12 @@ public class PatternManager2 {
                 Comparator.comparing(Pattern2::getDepth)
         ).collect(Collectors.toList());
 
+        JSONArray serializedPatterns = new JSONArray();
         for (Pattern2 pattern : sortedPatternInstances) {
-            int patternId = pattern.getPatternId();
-            List<Long> startTimes = pattern.getStartTimes();
-            List<Long> durations = pattern.getDurations();
-
-            writer.write("#############\n");
-            writer.write(String.valueOf(patternId + Constants.PATTERN_BASE) + ":\n");
-            writer.write(pattern.toJSONObject(singleFunctionPatterns) + "\n");
-
-            writer.write(String.valueOf(startTimes.size()) + " OCCURRENCES.\n");
-            for (int i = 0; i < startTimes.size(); i++) {
-                writer.write(String.valueOf(startTimes.get(i)));
-                writer.write(" : ");
-                writer.write(String.valueOf(durations.get(i)));
-                writer.write("\n");
-            }
+            serializedPatterns.put(pattern.serialize(singleFunctionPatterns, absoluteStartTime));
         }
+        writer.write(serializedPatterns.toString());
+//        writer.write(serializedPatterns.toString(2)); // Used for pretty printing
 
 //        writer.write("\n");
 //        writer.write("\n");

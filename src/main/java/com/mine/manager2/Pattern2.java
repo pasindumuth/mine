@@ -67,7 +67,7 @@ public class Pattern2 {
         durations.clear();
     }
 
-    public String toString(Map<Integer, Integer> singleFunctionPatterns) {
+    public String prettyString(Map<Integer, Integer> singleFunctionPatterns) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
 
@@ -102,7 +102,7 @@ public class Pattern2 {
         return sb.toString();
     }
 
-    public JSONObject toJSONObject(Map<Integer, Integer> singleFunctionPatterns) {
+    public JSONObject serializeRepresentation(Map<Integer, Integer> singleFunctionPatterns) {
         JSONArray baseFunctions = new JSONArray();
         for (Map.Entry<Integer, Integer> baseFunctionCount : baseFunctionCounts.entrySet()) {
             baseFunctions.put(
@@ -132,5 +132,21 @@ public class Pattern2 {
                 .put("depth", depth)
                 .put("baseFunctions", baseFunctions)
                 .put("patternIds", patternIds);
+    }
+
+    public JSONObject serialize(Map<Integer, Integer> singleFunctionPatterns, Long absoluteStartTime) {
+        JSONObject representation = serializeRepresentation(singleFunctionPatterns);
+        JSONArray intervals = new JSONArray();
+        for (int i = 0; i < startTimes.size(); i++) {
+            long relativeStartTime = startTimes.get(i) - absoluteStartTime;
+            long relativeEndTime = relativeStartTime + durations.get(i);
+            intervals.put(new JSONArray()
+                    .put(relativeStartTime)
+                    .put(relativeEndTime));
+        }
+        return new JSONObject()
+                .put("id", Constants.PATTERN_BASE + patternId)
+                .put("representation", representation)
+                .put("intervals", intervals);
     }
 }
