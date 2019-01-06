@@ -1,6 +1,8 @@
 package com.mine.manager2;
 
 import com.mine.Constants;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +61,8 @@ public class Pattern2 {
     }
 
     public void reset() {
+        patternIdCounts.clear();
+        baseFunctionCounts.clear();
         startTimes.clear();
         durations.clear();
     }
@@ -88,7 +92,7 @@ public class Pattern2 {
                 String singleFunctionId = singleFunctionPatterns.get(patternIdCount.getKey()).toString();
                 patternIdCountStrings.add(singleFunctionId + " -> " + patternIdCount.getValue());
             } else {
-                patternIdCountStrings.add(patternIdCount.getKey() + Constants.PATTERN_BASE + " -> " + patternIdCount.getValue());
+                patternIdCountStrings.add(Constants.PATTERN_BASE + patternIdCount.getKey() + " -> " + patternIdCount.getValue());
             }
         }
         sb.append(String.join(", ", patternIdCountStrings));
@@ -98,4 +102,35 @@ public class Pattern2 {
         return sb.toString();
     }
 
+    public JSONObject toJSONObject(Map<Integer, Integer> singleFunctionPatterns) {
+        JSONArray baseFunctions = new JSONArray();
+        for (Map.Entry<Integer, Integer> baseFunctionCount : baseFunctionCounts.entrySet()) {
+            baseFunctions.put(
+                    new JSONObject()
+                            .put("baseFunction", baseFunctionCount.getKey())
+                            .put("count", baseFunctionCount.getValue()));
+        }
+
+        JSONArray patternIds = new JSONArray();
+        for (Map.Entry<Integer, Integer> patternIdCount : patternIdCounts.entrySet()) {
+            if (patternIdCount.getKey() != Constants.NULL_PATTERN_ID) { // Don't bother adding the null pattern
+                if (singleFunctionPatterns.containsKey(patternIdCount.getKey())) {
+                    patternIds.put(
+                            new JSONObject()
+                                    .put("patternId", singleFunctionPatterns.get(patternIdCount.getKey()))
+                                    .put("count", patternIdCount.getValue()));
+                } else {
+                    patternIds.put(
+                            new JSONObject()
+                                    .put("patternId", Constants.PATTERN_BASE + patternIdCount.getKey())
+                                    .put("count", patternIdCount.getValue()));
+                }
+            }
+        }
+
+        return new JSONObject()
+                .put("depth", depth)
+                .put("baseFunctions", baseFunctions)
+                .put("patternIds", patternIds);
+    }
 }

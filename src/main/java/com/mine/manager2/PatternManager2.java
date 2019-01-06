@@ -1,14 +1,10 @@
 package com.mine.manager2;
 
 import com.mine.Constants;
-import org.json.JSONObject;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PatternManager2 {
@@ -110,17 +106,18 @@ public class PatternManager2 {
                 !(singleFunctionPatterns.containsKey(pattern.getPatternId()) || pattern.getStartTimes().isEmpty())
         ).collect(Collectors.toList());
 
-        for (Pattern2 pattern : filteredPatternInstances) {
+        List<Pattern2> sortedPatternInstances = filteredPatternInstances.stream().sorted(
+                Comparator.comparing(Pattern2::getDepth)
+        ).collect(Collectors.toList());
+
+        for (Pattern2 pattern : sortedPatternInstances) {
             int patternId = pattern.getPatternId();
             List<Long> startTimes = pattern.getStartTimes();
             List<Long> durations = pattern.getDurations();
 
             writer.write("#############\n");
             writer.write(String.valueOf(patternId + Constants.PATTERN_BASE) + ":\n");
-            writer.write(new JSONObject()
-                    .put("pattern", pattern.toString(singleFunctionPatterns))
-                    .put("representation", patternRepresentations.get(patternId).toString(singleFunctionPatterns))
-                    .toString() + "\n");
+            writer.write(pattern.toJSONObject(singleFunctionPatterns) + "\n");
 
             writer.write(String.valueOf(startTimes.size()) + " OCCURRENCES.\n");
             for (int i = 0; i < startTimes.size(); i++) {
@@ -131,16 +128,16 @@ public class PatternManager2 {
             }
         }
 
-        writer.write("\n");
-        writer.write("\n");
-
-        for (Pattern2 pattern1 : filteredPatternInstances) {
-            for (Pattern2 pattern2 : filteredPatternInstances) {
-                writer.write(String.valueOf(distanceMap.getDistance(pattern1.getPatternId(), pattern2.getPatternId())));
-                writer.write("\t");
-            }
-            writer.write("\n");
-        }
+//        writer.write("\n");
+//        writer.write("\n");
+//
+//        for (Pattern2 pattern1 : filteredPatternInstances) {
+//            for (Pattern2 pattern2 : filteredPatternInstances) {
+//                writer.write(String.valueOf(distanceMap.getDistance(pattern1.getPatternId(), pattern2.getPatternId())));
+//                writer.write("\t");
+//            }
+//            writer.write("\n");
+//        }
     }
 
     /**

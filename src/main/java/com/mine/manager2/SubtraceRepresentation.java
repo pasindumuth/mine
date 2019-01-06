@@ -1,6 +1,8 @@
 package com.mine.manager2;
 
 import com.mine.Constants;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.*;
 
@@ -126,5 +128,23 @@ public class SubtraceRepresentation {
 
         sb.append("}");
         return sb.toString();
+    }
+
+    public JSONObject toJSONObject(Map<Integer, Integer> singleFunctionPatterns) {
+        JSONArray patternIds = new JSONArray();
+        for (int patternId : this.patternIds.keySet()) {
+            if (patternId != Constants.NULL_PATTERN_ID) { // Don't bother adding the null pattern
+                if (singleFunctionPatterns.containsKey(patternId)) {
+                    patternIds.put(singleFunctionPatterns.get(patternId));
+                } else {
+                    patternIds.put(Constants.PATTERN_BASE + patternId);
+                }
+            }
+        }
+
+        return new JSONObject()
+                .put("depth", depth)
+                .put("baseFunction", baseFunction)
+                .put("patternIds", patternIds);
     }
 }
