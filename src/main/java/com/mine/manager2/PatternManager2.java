@@ -14,9 +14,10 @@ import java.util.stream.Collectors;
 
 public class PatternManager2 {
 
-    DistanceMap distanceMap;
-    List<SubtraceRepresentation> patternRepresentations = new ArrayList<>();
-    List<Pattern2> patternInstances = new ArrayList<>();
+    private DistanceMap distanceMap;
+    private List<SubtraceRepresentation> patternRepresentations = new ArrayList<>();
+    private List<Pattern2> patternInstances = new ArrayList<>();
+    private Map<Integer, Integer> patternInstancesOnBaseCount = new HashMap<>();
 
     public PatternManager2(DistanceMap distanceMap) {
         this.distanceMap = distanceMap;
@@ -90,10 +91,21 @@ public class PatternManager2 {
         return newPatternId;
     }
 
+    /**
+     * Accounts for pattern instances that don't occur on top of another pattern. This is only
+     * used during the verification stage.
+     */
+    public void addPatternOnBase(Integer patternId) {
+        Integer currentCount = patternInstancesOnBaseCount.get(patternId);
+        currentCount = currentCount != null ? currentCount : 0;
+        patternInstancesOnBaseCount.put(patternId, currentCount + 1);
+    }
+
     public void resetPatterns() {
         for (Pattern2 pattern : patternInstances) {
             pattern.reset();
         }
+        patternInstancesOnBaseCount.clear();
     }
 
     public void dumpPatterns(BufferedWriter writer, Long absoluteStartTime) throws IOException {
@@ -105,8 +117,9 @@ public class PatternManager2 {
             }
         }
 
-        // Since the pattern manager contains pattern shapes from previous threads, the patterns
-        // need to have any instances in this thread.
+        // Since the pattern manager contains pattern shapes from previous threads, we filter out patterns without any instances
+        // in this thread. We also filter out single function patterns, since they are trivial, and base patterns, which are just
+        // fictitious patterns used during pattern verification.
         List<Pattern2> filteredPatternInstances = patternInstances.stream().filter(pattern ->
                 !(singleFunctionPatterns.containsKey(pattern.getPatternId()) || pattern.getStartTimes().isEmpty())
         ).collect(Collectors.toList());
@@ -137,8 +150,8 @@ public class PatternManager2 {
     /**
      * Verifies:
      * 1. Patterns have constituent patterns with strictly lower depth.
-     * 1. The pattern instances instances of the patterns for a given depth occur on disjoint time intervals.
-     * 2. All patterns occurences are accounted for wherever they occur (except the first pattern).
+     * 2. The pattern instances instances of the patterns for a given depth occur on disjoint time intervals.
+     * 3. All patterns occurences are accounted for wherever they occur (except the first pattern).
      */
     private void verifyInstances() {
         System.out.println("Starting pattern verification.");
@@ -214,14 +227,17 @@ public class PatternManager2 {
                 patternOccurenceCount.set(patternId, currentCount - patternIdCount.getValue());
             }
         }
-        // Ignore the null pattern and the base pattern
-        for (int patternId = 1; patternId < patternOccurenceCount.size() - 1; patternId++) {
-            if (patternOccurenceCount.get(patternId) != 0) {
-                System.out.println("Failure: occurences of a non base pattern are not accounted for.");
-            }
+        for (Map.Entry<Integer, Integer> patternIdCount : patternInstancesOnBaseCount.entrySet()) {
+            int patternId = patternIdCount.getKey();
+            int currentCount = patternOccurenceCount.get(patternId);
+            patternOccurenceCount.set(patternId, currentCount - patternIdCount.getValue());
         }
-        if (patternOccurenceCount.get(patternOccurenceCount.size() - 1) != 1) {
-            System.out.println("Failure: base pattern has occurence count that is not 1.");
+        // Ignore the null pattern and the base pattern
+        for (int patternId = 1; patternId < patternOccurenceCount.size(); patternId++) {
+            int count = patternOccurenceCount.get(patternId);
+            if (count != 0) {
+                System.out.println("Failure: " + count + " occurences of pattern " + patternId + " are not accounted for.");
+            }
         }
     }
 

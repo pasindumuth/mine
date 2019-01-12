@@ -18,7 +18,10 @@ public class PatternMiner2 {
      */
     public PatternMiner2(PatternManager2 manager) {
         this.manager = manager;
-        representationForLevel.add(new RepresentationContainer(new SubtraceRepresentation(manager.getDistanceMap(), Constants.BASE_FUNCTION_ID), 0)); // dummy sequence to handle base functions
+        representationForLevel.add(
+                new RepresentationContainer(
+                        new SubtraceRepresentation(manager.getDistanceMap(), Constants.BASE_FUNCTION_ID),
+                        0)); // dummy sequence to handle base functions
     }
 
     /**
@@ -35,11 +38,11 @@ public class PatternMiner2 {
 
             String[] record = line.split("\t");
 
-            int functionID = Integer.parseInt(record[0]);
+            int functionId = Integer.parseInt(record[0]);
             int dir = Integer.parseInt(record[1]);
             long time = Long.parseLong(record[2]);
 
-            processEvent(functionID, dir, time);
+            processEvent(functionId, dir, time);
 
             line = reader.readLine();
         }
@@ -48,9 +51,9 @@ public class PatternMiner2 {
     /**
      * Fundamentally, this function defines how (complete) function call sequences map to patterns.
      */
-    public void processEvent(int functionID, int dir, long time) {
+    public void processEvent(int functionId, int dir, long time) {
         if (dir == Constants.FUNCTION_ENTER) {
-            SubtraceRepresentation newRepresentation = new SubtraceRepresentation(manager.getDistanceMap(), functionID);
+            SubtraceRepresentation newRepresentation = new SubtraceRepresentation(manager.getDistanceMap(), functionId);
             RepresentationContainer container = new RepresentationContainer(newRepresentation, time);
             stackLevel++;
             if (stackLevel < representationForLevel.size()) representationForLevel.set(stackLevel, container);
@@ -58,9 +61,16 @@ public class PatternMiner2 {
         } else {
             // The highest sequence is finished. Update the set of patterns.
             RepresentationContainer container = representationForLevel.get(stackLevel);
+            if (container.getRepresentation().getBaseFunction() != functionId) {
+                System.out.println("Error: function that hasn't been entered is being exit.");
+            }
+
             container.setEndTime(time);
             int newPatternId = manager.updatePatterns(container);
             stackLevel--;
+            if (stackLevel == 0) {
+                manager.addPatternOnBase(newPatternId);
+            }
 
             // Update representation below with the new pattern instance.
             SubtraceRepresentation belowRepresentation = representationForLevel.get(stackLevel).getRepresentation();
