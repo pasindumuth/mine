@@ -38,8 +38,8 @@ public class PatternManager2 {
         patternInstances.add(new Pattern2(Constants.NULL_PATTERN_ID, nullRepresentation));
     }
 
-    public double getAcceptanceDistance(int patternId) {
-        return Constants.NULL_FUNCTION_DISTANCE * patternRepresentations.get(patternId).getDepth();
+    public double getAcceptanceDistance(SubtraceRepresentation representation1, SubtraceRepresentation representation2) {
+        return Constants.NULL_FUNCTION_DISTANCE * Math.min(representation1.getDepth(), representation2.getDepth());
     }
 
     public DistanceMap getDistanceMap() {
@@ -58,7 +58,7 @@ public class PatternManager2 {
 
         for (int patternId = 0; patternId < patternRepresentations.size(); patternId++) {
             SubtraceRepresentation representation = patternRepresentations.get(patternId);
-            double acceptanceDistance = getAcceptanceDistance(patternId);
+            double acceptanceDistance = getAcceptanceDistance(representation, newRepresentation);
             double distance = newRepresentation.getDistance(representation);
             // Accept subtrace only from patterns whose depths which are greater.
             if (distance < acceptanceDistance && representation.getDepth() >= newRepresentation.getDepth()) {

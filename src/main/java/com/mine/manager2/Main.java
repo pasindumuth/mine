@@ -12,8 +12,8 @@ import java.util.ArrayList;
 
 public class Main {
 
-    private static final int START_THREAD = 9;
-    private static final int END_THREAD = 9;
+    private static final int START_THREAD = 1;
+    private static final int END_THREAD = 11;
 
     public static void main(String[] args) throws IOException {
         PatternManager2 manager = new PatternManager2(new DistanceMap(new ArrayList<>()));
