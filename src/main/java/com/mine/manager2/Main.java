@@ -1,7 +1,10 @@
 package com.mine.manager2;
 
 import com.mine.Constants;
+import com.mine.manager2.analyzer.Analyzer;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,16 +15,40 @@ import java.util.ArrayList;
 
 public class Main {
 
-    private static final int START_THREAD = 1;
-    private static final int END_THREAD = 11;
-
     public static void main(String[] args) throws IOException {
+        Constants.RunMode mode = Constants.RunMode.MINE;
+        switch (mode) {
+            case ANALYZE:
+                // Run the analyzer
+                Analyzer analyzer = new Analyzer();
+                analyzer.analyze();
+                break;
+            case MINE:
+                // Mine patterns
+                minePatterns();
+                break;
+            case SPACE_FIX:
+                // Fix pattern indentation for readability in case we accidently indent with 0
+                BufferedReader reader = new BufferedReader(
+                        new FileReader(Constants.PATTERN_DIR + "thread.1.patterns"));
+                JSONTokener tokener = new JSONTokener(reader);
+                JSONArray patterns = new JSONArray(tokener);
+                BufferedWriter writer = new BufferedWriter(
+                        new FileWriter(Constants.PATTERN_DIR + "thread.1.patterns"));
+                writer.write(patterns.toString(2));
+                break;
+            default:
+                throw new IllegalArgumentException("No such RunMode supported");
+        }
+    }
+
+    private static void minePatterns()  throws IOException {
         PatternManager2 manager = new PatternManager2(new DistanceMap(new ArrayList<>()));
         Long absoluteStartTime = Long.MAX_VALUE;
         Long absoluteEndTime = Long.MIN_VALUE;
 
         // Find absolute start and end across all threads
-        for (int i = START_THREAD; i <= END_THREAD; i++) {
+        for (int i = Constants.START_THREAD; i <= Constants.END_THREAD; i++) {
             BufferedReader reader = new BufferedReader(
                     new FileReader(Constants.THREAD_DIR + "thread." + i + ".trace"));
             String line = reader.readLine();
@@ -50,7 +77,7 @@ public class Main {
 
         metadataWriter.close();
 
-        for (int i = START_THREAD; i <= END_THREAD; i++) { // For now, just do one thread to see what we get.
+        for (int i = Constants.START_THREAD; i <= Constants.END_THREAD; i++) {
             // Read and process data
             BufferedReader reader = new BufferedReader(
                     new FileReader(Constants.THREAD_DIR + "thread." + i + ".trace"));

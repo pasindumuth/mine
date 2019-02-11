@@ -12,3 +12,6 @@ is one minus the line number.
 ## Testing
 
 To run the test, run `./gradlew test`.
+
+To analyze the mined patterns, run gr run --args='analyze'
+ 

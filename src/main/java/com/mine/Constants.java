@@ -1,7 +1,17 @@
 package com.mine;
 
 public class Constants {
+    public enum RunMode {
+        ANALYZE,
+        MINE,
+        SPACE_FIX,
+    }
 
+    // Configurations
+    public static final int START_THREAD = 1;
+    public static final int END_THREAD = 1;
+
+    // Directories
     public static final String DATA_DIR = "data/";
     public static final String TEST_DATA_DIR = "src/test/data/";
     public static final String THREAD_DIR = DATA_DIR + "threads/";

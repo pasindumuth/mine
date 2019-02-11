@@ -13,10 +13,10 @@ public class Pattern2 {
 
     private final int patternId;
     private final int depth;
-    private TreeMap<Integer, Integer> patternIdCounts = new TreeMap<>();
-    private TreeMap<Integer, Integer> baseFunctionCounts = new TreeMap<>();
-    private List<Long> startTimes = new ArrayList<>();
-    private List<Long> durations = new ArrayList<>();
+    private final TreeMap<Integer, Integer> patternIdCounts = new TreeMap<>();
+    private final TreeMap<Integer, Integer> baseFunctionCounts = new TreeMap<>();
+    private final List<Long> startTimes = new ArrayList<>();
+    private final List<Long> durations = new ArrayList<>();
 
     public Pattern2(Integer patternId, SubtraceRepresentation representation) {
         this.patternId =patternId;
